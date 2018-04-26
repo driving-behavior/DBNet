@@ -14,12 +14,12 @@ _Created by Yiping Chen*, Jingkang Wang*, Jonathan Li, Cewu Lu, Zhipeng Luo, Han
 5. [Citation](#citation)
 6. [License](#license)
 
-### Introduction
+## Introduction
 This work is based on our [arXiv paper](https://arxiv.org/abs/1804.xxxx), which is going to appear in CVPR 2018. We propose a large-scale dataset for driving behavior learning, namely, DBNet. You can also check our [dataset webpage](http://www.drivingbehavior.org/) for a deeper introduction.
 
 In this repository, we release __demo code__ and __partial prepared data__ for training with only images, as well as leveraging feature maps or point clouds. (__More demo models and scripts are released soon!__)
 
-### Requirements
+## Requirements
 
 * **Tensorflow 1.2.0**
 * Python 2.7
@@ -28,7 +28,7 @@ In this repository, we release __demo code__ and __partial prepared data__ for t
 
 The code has been tested with Python 2.7, Tensorflow 1.2.0, CUDA 8.0 and cuDNN 5.1 on Ubuntu 14.04. But it may work on more machines (directly or through mini-modification), pull-requests or test report are well welcomed.
 
-### Quick Start
+## Quick Start
 To train a model to predict vehicle speeds and steering angles:
 
     python train.py --model nvidia_pm --batch_size 16 --gpu 0
@@ -43,10 +43,10 @@ We can use TensorBoard to view the network architecture and monitor the training
 
     tensorboard --logdir logs
 
-### Contributors
+## Contributors
 DBNet was developed by [MVIG](http://www.mvig.org/), Shanghai Jiao Tong University* and [SCSC](http://scsc.xmu.edu.cn/) Lab, Xiamen University* (*alphabetical order*).
 
-### Citation
+## Citation
 If you find our work useful in your research, please consider citing:
 
 	@article{dbnet2018,
@@ -56,5 +56,5 @@ If you find our work useful in your research, please consider citing:
 	  year={2018}
 	}
 
-### License
+## License
 Our code is released under Apache 2.0 License. The copyright of DBNet could be checked [here](http://www.drivingbehavior.org).
