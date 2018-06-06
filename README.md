@@ -15,9 +15,9 @@ _Created by Yiping Chen*, Jingkang Wang*, Jonathan Li, Cewu Lu, Zhipeng Luo, Han
 6. [License](#license)
 
 ## Introduction
-This work is based on our [arXiv paper](https://arxiv.org/abs/1804.xxxx), which is going to appear in CVPR 2018. We propose a large-scale dataset for driving behavior learning, namely, DBNet. You can also check our [dataset webpage](http://www.drivingbehavior.org/) for a deeper introduction.
+This work is based on our [research paper](https://arxiv.org/abs/1804.xxxx), which is going to appear in CVPR 2018. We propose a large-scale dataset for driving behavior learning, namely, DBNet. You can also check our [dataset webpage](http://www.drivingbehavior.org/) for a deeper introduction.
 
-In this repository, we release __demo code__ and __partial prepared data__ for training with only images, as well as leveraging feature maps or point clouds. (__More demo models and scripts are released soon!__)
+In this repository, we release __demo code__ and __partial prepared data__ for training with only images, as well as leveraging feature maps or point clouds. The prepared data are accessible [here](https://drive.google.com/open?id=1NjhHwV_q6EMZ6MiGhZnqxg7yRCawx79c). (__More demo models and scripts are released soon!__)
 
 ## Requirements
 
