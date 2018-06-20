@@ -49,12 +49,12 @@ DBNet was developed by [MVIG](http://www.mvig.org/), Shanghai Jiao Tong Universi
 ## Citation
 If you find our work useful in your research, please consider citing:
 
-	@article{dbnet2018,
+	@inproceedings{DBNet2018,
 	  title={DBNet: A Large-Scale Dataset for Driving Behavior Learning},
 	  author={Yiping Chen and Jingkang Wang and Jonathan Li and Cewu Lu and Zhipeng Luo and HanXue and Cheng Wang},
-	  journal={arXiv preprint arXiv:1804.xxxx},
+	  booktitle={2018 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
 	  year={2018}
-	}
+	  }
 
 ## License
 Our code is released under Apache 2.0 License. The copyright of DBNet could be checked [here](http://www.drivingbehavior.org).
