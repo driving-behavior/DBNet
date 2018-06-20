@@ -54,7 +54,7 @@ If you find our work useful in your research, please consider citing:
 	  author={Yiping Chen and Jingkang Wang and Jonathan Li and Cewu Lu and Zhipeng Luo and HanXue and Cheng Wang},
 	  booktitle={2018 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
 	  year={2018}
-	  }
+	}
 
 ## License
 Our code is released under Apache 2.0 License. The copyright of DBNet could be checked [here](http://www.drivingbehavior.org).
