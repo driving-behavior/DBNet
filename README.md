@@ -15,7 +15,7 @@ _Created by Yiping Chen*, Jingkang Wang*, Jonathan Li, Cewu Lu, Zhipeng Luo, Han
 6. [License](#license)
 
 ## Introduction
-This work is based on our [research paper](https://arxiv.org/abs/1804.xxxx), which is going to appear in CVPR 2018. We propose a large-scale dataset for driving behavior learning, namely, DBNet. You can also check our [dataset webpage](http://www.drivingbehavior.org/) for a deeper introduction.
+This work is based on our [research paper](http://openaccess.thecvf.com/content_cvpr_2018/html/Chen_LiDAR-Video_Driving_Dataset_CVPR_2018_paper.html), which is going to appear in CVPR 2018. We propose a large-scale dataset for driving behavior learning, namely, DBNet. You can also check our [dataset webpage](http://www.drivingbehavior.org/) for a deeper introduction.
 
 In this repository, we release __demo code__ and __partial prepared data__ for training with only images, as well as leveraging feature maps or point clouds. The prepared data are accessible [here](https://drive.google.com/open?id=1NjhHwV_q6EMZ6MiGhZnqxg7yRCawx79c). (__More demo models and scripts are released soon!__)
 
@@ -49,11 +49,12 @@ DBNet was developed by [MVIG](http://www.mvig.org/), Shanghai Jiao Tong Universi
 ## Citation
 If you find our work useful in your research, please consider citing:
 
-	@inproceedings{DBNet2018,
-	  title={DBNet: A Large-Scale Dataset for Driving Behavior Learning},
-	  author={Yiping Chen and Jingkang Wang and Jonathan Li and Cewu Lu and Zhipeng Luo and HanXue and Cheng Wang},
-	  booktitle={2018 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
-	  year={2018}
+	@InProceedings{DBNet2018,
+	  author = {Yiping Chen and Jingkang Wang and Jonathan Li and Cewu Lu and Zhipeng Luo and HanXue and Cheng Wang},
+	  title = {LiDAR-Video Driving Dataset: Learning Driving Policies Effectively},
+	  booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+	  month = {June},
+	  year = {2018}
 	}
 
 ## License
