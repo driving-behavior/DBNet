@@ -85,7 +85,7 @@ class Provider:
             c = list(zip(X_train1, X_train2, Y_train1, Y_train2))
         else:
             c = list(zip(X_train1, X_train2))
-        random.shuffle(c)
+        # random.shuffle(c)
 
         if description == "train":
             self.X_train1, self.X_train2, self.Y_train1, self.Y_train2 = zip(*c)
