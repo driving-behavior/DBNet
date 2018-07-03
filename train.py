@@ -178,6 +178,7 @@ def train_one_epoch(sess, ops, train_writer, data_input):
     loss_sum = 0
     acc_a_sum = 0
     acc_s_sum = 0
+    counter = 0
 
     for batch_idx in range(num_batches):
         if "io" in MODEL_FILE:
@@ -206,6 +207,13 @@ def train_one_epoch(sess, ops, train_writer, data_input):
         acc_s = np.abs(np.subtract(pred_val[:, 0], labels[:, 0])) < (5.0 / 20)
         acc_s = np.mean(acc_s)
         acc_s_sum += acc_s
+
+        counter += 1
+        if counter % 200 == 0:
+            log_string(str(counter) + " step:")
+            log_string('loss: %f' % (loss_sum / float(num_batches)))
+            log_string('acc (angle): %f' % (acc_a_sum / float(num_batches)))
+            log_string('acc (speed): %f' % (acc_s_sum / float(num_batches)))
 
     log_string('mean loss: %f' % (loss_sum / float(num_batches)))
     log_string('accuracy (angle): %f' % (acc_a_sum / float(num_batches)))

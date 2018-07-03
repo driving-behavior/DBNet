@@ -14,20 +14,29 @@ class Provider:
     def __init__(self, train_dir='data/dbnet-2018/train/',
                  val_dir='data/dbnet-2018/val/',
                  test_dir="data/dbnet-2018/test/"):
+
+        self.__initialize__(train_dir, val_dir, test_dir)
+        self.read()
+        self.transform()
+
+    def __initialize__(self, train_dir, val_dir, test_dir):
         self.X_train1, self.X_train2 = [], []
         self.Y_train1, self.Y_train2 = [], []
         self.X_val1, self.X_val2 = [], []
         self.Y_val1, self.Y_val2 = [], []
         self.X_test1, self.X_test2 = [], []
+        self.x_train1, self.x_train2 = [], []
+        self.x_val1, self.x_val2 = [], []
+        self.x_test1, self.x_test2 = [], []
         self.train_pointer = 0
         self.val_pointer = 0
         self.test_pointer = 0
         self.train_dir = train_dir
         self.val_dir = val_dir
         self.test_dir = test_dir
-        self.read()
-        self.transform()
-        # self.suffle()
+        self.cache_train = False
+        self.cache_val = False
+        self.cache_test = False
 
     def read(self, filename="behavior.csv"):
         """
@@ -41,7 +50,7 @@ class Provider:
         val_sub.sort()
         self.read_from(train_sub, filename, "train")
         self.read_from(val_sub, filename, "val")
-        # self.read_from(test_sub, filename, "train")
+        self.read_from(test_sub, filename, "test")
 
     def read_from(self, sub_folders, filename, description="train"):
         if description == "train":
@@ -55,17 +64,22 @@ class Provider:
         else:
             raise NotImplementedError
 
-        for folder in sub_folders:
-             with open(os.path.join(folder, filename)) as f:
-                count = 0
-                for line in f:
-                    line = line.rstrip()
-                    X_train1.append(os.path.join(folder, "dvr_66x200/" + str(count) + ".jpg"))
-                    X_train2.append(os.path.join(folder, "points_16384/" + str(count) + ".las"))
-                    if not description == "test":
+        if not description == "test":
+            for folder in sub_folders:
+                with open(os.path.join(folder, filename)) as f:
+                    count = 0
+                    for line in f:
+                        line = line.rstrip()
+                        X_train1.append(os.path.join(folder, "dvr_66x200/" + str(count) + ".jpg"))
+                        X_train2.append(os.path.join(folder, "points_16384/" + str(count) + ".las"))
                         Y_train1.append((float(line.split(",")[1]) - 20) / 20)
                         Y_train2.append(float(line.split(",")[0]) * scipy.pi / 180)
-                    count += 1  
+                        count += 1
+        else:
+            for folder in sub_folders:
+                for count in range(len(glob.glob(os.path.join(folder, "dvr_66x200/*.jpg")))):
+                    X_train1.append(os.path.join(folder, "dvr_66x200/" + str(count) + ".jpg"))
+                    X_train2.append(os.path.join(folder, "points_16384/" + str(count) + ".las"))
 
         if not description == "test":
             c = list(zip(X_train1, X_train2, Y_train1, Y_train2))
@@ -89,6 +103,7 @@ class Provider:
         self.X_val1, self.X_val2 = np.asarray(self.X_val1), np.asarray(self.X_val2)
         self.Y_val = np.transpose(np.asarray((self.Y_val1, self.Y_val2)))
 
+        self.num_test = len(self.X_test1)
         self.X_test1, self.X_test2 = np.asarray(self.X_test1), np.asarray(self.X_test2)
 
         self.num_train = len(self.Y_train)
@@ -99,38 +114,68 @@ class Provider:
         x_out2 = []
         y_out = []
         if description == 'train':
+            if not self.cache_train:
+                print ("Loading training data ...")
+                for i in range(self.num_train):
+                    self.x_train1.append(scipy.misc.imresize(scipy.misc.imread(
+                              self.X_train1[i]), shape) / 255.0)
+                    infile = laspy.file.File(self.X_train2[i])
+                    data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
+                    self.x_train2.append(data)
+                    self.cache_train = True
+                print ("Finished loading!")
+            
             for i in range(0, batch_size):
                 index = (self.train_pointer + i) % len(self.X_train1)
-                x_out1.append(scipy.misc.imresize(scipy.misc.imread(
-                              self.X_train1[index]), shape) / 255.0)
-                infile = laspy.file.File(self.X_train2[index])
-                data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
-                x_out2.append(data)
+                x_out1.append(self.x_train1[index])
+                x_out2.append(self.x_train2[index])
                 y_out.append(self.Y_train[index])
                 self.train_pointer += batch_size
+
         elif description == "val":
+            if not self.cache_val:
+                print ("Loading validation data ...")
+                for i in range(0, self.num_val):
+                    self.x_val1.append(scipy.misc.imresize(scipy.misc.imread(
+                                self.X_val1[i]), shape) / 255.0)
+                    infile = laspy.file.File(self.X_val2[i])
+                    data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
+                    self.x_val2.append(data)
+                    self.cache_val = True
+                print ("Finished loading!")
+                    
             for i in range(0, batch_size):
                 index = (self.val_pointer + i) % len(self.X_val1)
-                x_out1.append(scipy.misc.imresize(scipy.misc.imread(
-                              self.X_val1[index]), shape) / 255.0)
-                infile = laspy.file.File(self.X_val2[index])
-                data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
-                x_out2.append(data)
+                x_out1.append(self.x_val1[index])
+                x_out2.append(self.x_val2[index])
                 y_out.append(self.Y_val[index])
                 self.val_pointer += batch_size
+
         elif description == "test":
+            if not self.cache_test:
+                print ("Loading testing data ...")
+                for i in range(0, self.num_test):
+                    self.x_test1.append(scipy.misc.imresize(scipy.misc.imread(
+                                self.X_test1[i]), shape) / 255.0)
+                    infile = laspy.file.File(self.X_test2[i])
+                    data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
+                    self.x_test2.append(data)
+                    self.cache_test = True
+                print ("Finished loading!")
+
             for i in range(0, batch_size):
-                index = (self.val_pointer + i) % len(self.X_val1)
-                x_out1.append(scipy.misc.imresize(scipy.misc.imread(
-                              self.X_val1[index]), shape) / 255.0)
-                infile = laspy.file.File(self.X_val2[index])
-                data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
-                x_out2.append(data)
-                self.test_pointer += batch_size       
+                index = (self.test_pointer + i) % len(self.X_test1)
+                x_out1.append(self.x_test1[index])
+                x_out2.append(self.x_test2[index])
+                self.test_pointer += batch_size
+
         else:
             raise NotImplementedError
 
-        return np.stack(x_out1), np.stack(x_out2), np.stack(y_out)
+        if not description == "test":
+            return np.stack(x_out1), np.stack(x_out2), np.stack(y_out)
+        else:
+            return np.stack(x_out1), np.stack(x_out2) 
 
     def load_val_all(self, batch_size, shape=[66, 200]):
         x_out1 = []
@@ -526,7 +571,8 @@ def testProvider():
     instance0 = Provider()
     print (len(instance0.X_train1), len(instance0.X_train2), len(instance0.Y_train))
     print (len(instance0.X_val1), len(instance0.X_val2), len(instance0.Y_val))
-    print (instance0.X_val1[:3], instance0.X_val2[:3], instance0.Y_val[:3])
+    print (len(instance0.X_test1), len(instance0.X_test2))
+    print (instance0.X_val1[:3], instance0.X_val2[:3])
     print (instance0.X_val2[0])
     x1_, x2_, y_ = instance0.load_val_all(16)
     print (len(x1_), len(x2_), len(y_))
@@ -534,7 +580,17 @@ def testProvider():
     for i in range(1):
         x1_, x2_, y_ = instance0.load_one_batch(156, 'train')
         print (x1_.shape, x2_.shape, y_.shape)
-    
+        print (np.asarray(instance0.x_train1).shape)
+        x1_, x2_, y_ = instance0.load_one_batch(156, 'train')
+        print (x1_.shape, x2_.shape, y_.shape)
+        x1_, x2_, y_ = instance0.load_one_batch(156, 'val')
+        print (x1_.shape, x2_.shape, y_.shape)
+        print (np.asarray(instance0.x_val1).shape)
+        x1_, x2_, y_ = instance0.load_one_batch(156, 'val')
+        x1_, x2_ = instance0.load_one_batch(156, 'test')
+        print (x1_.shape, x2_.shape)
+        print (np.asarray(instance0.x_test1).shape)
+        x1_, x2_ = instance0.load_one_batch(156, 'test')
     '''
     instance1 = DVR_Provider()
     print (len(instance1.xs), len(instance1.ys))
