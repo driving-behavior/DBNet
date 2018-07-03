@@ -16,8 +16,8 @@ sys.path.append(os.path.join(BASE_DIR, 'models'))
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', type=int, default=0,
                     help='GPU to use [default: GPU 0]')
-parser.add_argument('--model', default='nvidia_pn',
-                    help='Model name [default: nvidia_pn]')
+parser.add_argument('--model', default='nvidia_io',
+                    help='Model name [default: nvidia_io]')
 parser.add_argument('--log_dir', default='logs',
                     help='Log dir [default: logs]')
 parser.add_argument('--max_epoch', type=int, default=250,
@@ -51,7 +51,6 @@ BN_DECAY_DECAY_RATE = 0.5
 BN_DECAY_DECAY_STEP = float(DECAY_STEP)
 BN_DECAY_CLIP = 0.99
 
-assert (FLAGS.model == "nvidia_pn")
 MODEL = importlib.import_module(FLAGS.model)  # import network module
 MODEL_FILE = os.path.join(BASE_DIR, 'models', FLAGS.model+'.py')
 
@@ -95,12 +94,17 @@ def get_bn_decay(batch):
 def train():
     with tf.Graph().as_default():
         with tf.device('/gpu:'+str(GPU_INDEX)):
-            if 'pn' in MODEL_FILE:
-                data_input = provider.Provider()
+            if 'io' in MODEL_FILE:
+                data_input = provider.DVR_Provider()
+                imgs_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE)
+            elif 'pm' in MODEL_FILE:
+                data_input = provider.DVR_FMAP_Provider()
+                imgs_pl, fmaps_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE)
+                imgs_pl = [imgs_pl, fmaps_pl]
+            else:
+                data_input = provider.DVR_Points_Provider()
                 imgs_pl, pts_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE)
                 imgs_pl = [imgs_pl, pts_pl]
-            else:
-                raise NotImplementedError
 
             is_training_pl = tf.placeholder(tf.bool, shape=())
             print(is_training_pl)

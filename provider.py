@@ -1,13 +1,175 @@
+from __future__ import print_function
+
 import random
 from math import ceil
 
 import laspy
 import numpy as np
 import scipy.misc
+import glob
+import os
+
+
+class Provider:
+    def __init__(self, train_dir='data/dbnet-2018/train/',
+                 val_dir='data/dbnet-2018/val/',
+                 test_dir="data/dbnet-2018/test/"):
+        self.X_train1, self.X_train2 = [], []
+        self.Y_train1, self.Y_train2 = [], []
+        self.X_val1, self.X_val2 = [], []
+        self.Y_val1, self.Y_val2 = [], []
+        self.X_test1, self.X_test2 = [], []
+        self.train_pointer = 0
+        self.val_pointer = 0
+        self.test_pointer = 0
+        self.train_dir = train_dir
+        self.val_dir = val_dir
+        self.test_dir = test_dir
+        self.read()
+        self.transform()
+        # self.suffle()
+
+    def read(self, filename="behavior.csv"):
+        """
+        Read data and labels
+            :param filename: filename of labels
+        """
+        train_sub = glob.glob(os.path.join(self.train_dir, "*"))
+        val_sub = glob.glob(os.path.join(self.val_dir, "*"))
+        test_sub = glob.glob(os.path.join(self.test_dir, "*"))
+        train_sub.sort()
+        val_sub.sort()
+        self.read_from(train_sub, filename, "train")
+        self.read_from(val_sub, filename, "val")
+        # self.read_from(test_sub, filename, "train")
+
+    def read_from(self, sub_folders, filename, description="train"):
+        if description == "train":
+            X_train1, X_train2 = self.X_train1, self.X_train2
+            Y_train1, Y_train2 = self.Y_train1, self.Y_train2
+        elif description == "val":
+            X_train1, X_train2 = self.X_val1, self.X_val2
+            Y_train1, Y_train2 = self.Y_val1, self.Y_val2
+        elif description == "test":
+            X_train1, X_train2 = self.X_test1, self.X_test2
+        else:
+            raise NotImplementedError
+
+        for folder in sub_folders:
+             with open(os.path.join(folder, filename)) as f:
+                count = 0
+                for line in f:
+                    line = line.rstrip()
+                    X_train1.append(os.path.join(folder, "dvr_66x200/" + str(count) + ".jpg"))
+                    X_train2.append(os.path.join(folder, "points_16384/" + str(count) + ".las"))
+                    if not description == "test":
+                        Y_train1.append((float(line.split(",")[1]) - 20) / 20)
+                        Y_train2.append(float(line.split(",")[0]) * scipy.pi / 180)
+                    count += 1  
+
+        if not description == "test":
+            c = list(zip(X_train1, X_train2, Y_train1, Y_train2))
+        else:
+            c = list(zip(X_train1, X_train2))
+        random.shuffle(c)
+
+        if description == "train":
+            self.X_train1, self.X_train2, self.Y_train1, self.Y_train2 = zip(*c)
+        elif description == "val":
+            self.X_val1, self.X_val2, self.Y_val1, self.Y_val2 = zip(*c)
+        elif description == "test":
+            self.X_test1, self.X_test2 = zip(*c)
+        else:
+            raise NotImplementedError
+
+    def transform(self):
+        self.X_train1, self.X_train2 = np.asarray(self.X_train1), np.asarray(self.X_train2)
+        self.Y_train = np.transpose(np.asarray((self.Y_train1, self.Y_train2)))
+
+        self.X_val1, self.X_val2 = np.asarray(self.X_val1), np.asarray(self.X_val2)
+        self.Y_val = np.transpose(np.asarray((self.Y_val1, self.Y_val2)))
+
+        self.X_test1, self.X_test2 = np.asarray(self.X_test1), np.asarray(self.X_test2)
+
+        self.num_train = len(self.Y_train)
+        self.num_val = len(self.Y_val)
+
+    def load_one_batch(self, batch_size, description='train', shape=[66, 200]):
+        x_out1 = []
+        x_out2 = []
+        y_out = []
+        if description == 'train':
+            for i in range(0, batch_size):
+                index = (self.train_pointer + i) % len(self.X_train1)
+                x_out1.append(scipy.misc.imresize(scipy.misc.imread(
+                              self.X_train1[index]), shape) / 255.0)
+                infile = laspy.file.File(self.X_train2[index])
+                data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
+                x_out2.append(data)
+                y_out.append(self.Y_train[index])
+                self.train_pointer += batch_size
+        elif description == "val":
+            for i in range(0, batch_size):
+                index = (self.val_pointer + i) % len(self.X_val1)
+                x_out1.append(scipy.misc.imresize(scipy.misc.imread(
+                              self.X_val1[index]), shape) / 255.0)
+                infile = laspy.file.File(self.X_val2[index])
+                data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
+                x_out2.append(data)
+                y_out.append(self.Y_val[index])
+                self.val_pointer += batch_size
+        elif description == "test":
+            for i in range(0, batch_size):
+                index = (self.val_pointer + i) % len(self.X_val1)
+                x_out1.append(scipy.misc.imresize(scipy.misc.imread(
+                              self.X_val1[index]), shape) / 255.0)
+                infile = laspy.file.File(self.X_val2[index])
+                data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
+                x_out2.append(data)
+                self.test_pointer += batch_size       
+        else:
+            raise NotImplementedError
+
+        return np.stack(x_out1), np.stack(x_out2), np.stack(y_out)
+
+    def load_val_all(self, batch_size, shape=[66, 200]):
+        x_out1 = []
+        x_out2 = []
+        y_out = []
+        index = 0
+        iteration = int(ceil(len(self.X_val1) / float(batch_size)))
+        for i in range(iteration):
+            xs1 = []
+            xs2 = []
+            ys = []
+            if i == iteration - 1:
+                for i in range(index, len(self.X_val1)):
+                    xs1.append(scipy.misc.imresize(scipy.misc.imread(
+                               self.X_val1[i]), shape) / 255.0)
+                    infile = laspy.file.File(self.X_val2[i])
+                    data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
+                    xs2.append(data)
+
+                    ys.append(self.Y_val[i])
+            else:
+                for i in range(0, batch_size):
+                    xs1.append(scipy.misc.imresize(scipy.misc.imread(
+                               self.X_val1[index + i]), shape) / 255.0)
+                    infile = laspy.file.File(self.X_val2[index + i])
+                    data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
+                    xs2.append(data)
+                    ys.append(self.Y_val[index + i])
+
+                index += batch_size
+
+            x_out1.append(np.stack(xs1))
+            x_out2.append(np.stack(xs2))
+            y_out.append(np.stack(ys))
+        return np.asarray(x_out1), np.asarray(x_out2), np.asarray(y_out)
 
 
 class DVR_Provider:
-    def __init__(self, input_dir='data/DVR/'):
+    def __init__(self, input_dir='data/demo/DVR/'):
         self.xs = []
         self.ys1 = []   # vehicle speeds
         self.ys2 = []   # wheel angles
@@ -20,7 +182,7 @@ class DVR_Provider:
         self.transform()
         self.split_set(0.8)
         self.suffle()
-        print self.xs
+        print (self.xs)
 
     def read(self, filename="data.csv"):
         """
@@ -126,7 +288,8 @@ class DVR_Provider:
 
 
 class DVR_FMAP_Provider:
-    def __init__(self, input_dir1='data/DVR/', input_dir2='data/fmap/'):
+    def __init__(self, input_dir1='data/demo/DVR/', 
+                 input_dir2='data/demo/fmap/'):
         self.xs1 = []
         self.xs2 = []
         self.ys1 = []  # vehicle speeds
@@ -182,11 +345,11 @@ class DVR_FMAP_Provider:
         self.num_train = len(self.train_ys)
         self.num_val = len(self.val_ys)
 
-    def load_one_batch(self, batch_size, Type='train', shape1=[66, 200], shape2=[66, 200]):
+    def load_one_batch(self, batch_size, description='train', shape1=[66, 200], shape2=[66, 200]):
         x_out1 = []
         x_out2 = []
         y_out = []
-        if Type == 'train':
+        if description == 'train':
             for i in range(0, batch_size):
                 index = (self.train_pointer + i) % len(self.train_xs1)
                 x_out1.append(scipy.misc.imresize(scipy.misc.imread(
@@ -240,8 +403,8 @@ class DVR_FMAP_Provider:
 
 
 class DVR_Points_Provider:
-    def __init__(self, input_dir1='data/DVR/', 
-                 input_dir2='data/points_16384/'):
+    def __init__(self, input_dir1='data/demo/DVR/', 
+                 input_dir2='data/demo/points_16384/'):
 
         self.xs1 = []  # DVR
         self.xs2 = []  # points
@@ -297,11 +460,11 @@ class DVR_Points_Provider:
         self.num_train = len(self.train_ys)
         self.num_val = len(self.val_ys)
 
-    def load_one_batch(self, batch_size, Type='train', shape=[66, 200]):
+    def load_one_batch(self, batch_size, description='train', shape=[66, 200]):
         x_out1 = []
         x_out2 = []
         y_out = []
-        if Type == 'train':
+        if description == 'train':
             for i in range(0, batch_size):
                 index = (self.train_pointer + i) % len(self.train_xs1)
                 x_out1.append(scipy.misc.imresize(scipy.misc.imread(
@@ -360,47 +523,60 @@ class DVR_Points_Provider:
 
 
 def testProvider():
+    instance0 = Provider()
+    print (len(instance0.X_train1), len(instance0.X_train2), len(instance0.Y_train))
+    print (len(instance0.X_val1), len(instance0.X_val2), len(instance0.Y_val))
+    print (instance0.X_val1[:3], instance0.X_val2[:3], instance0.Y_val[:3])
+    print (instance0.X_val2[0])
+    x1_, x2_, y_ = instance0.load_val_all(16)
+    print (len(x1_), len(x2_), len(y_))
+    print (x2_[0].shape)
+    for i in range(1):
+        x1_, x2_, y_ = instance0.load_one_batch(156, 'train')
+        print (x1_.shape, x2_.shape, y_.shape)
+    
+    '''
     instance1 = DVR_Provider()
-    print len(instance1.xs), len(instance1.ys)
-    print len(instance1.train_xs), len(instance1.train_ys)
-    print len(instance1.val_xs), len(instance1.val_ys)
-    print instance1.val_xs[:3], instance1.val_ys[:3]
+    print (len(instance1.xs), len(instance1.ys))
+    print (len(instance1.train_xs), len(instance1.train_ys))
+    print (len(instance1.val_xs), len(instance1.val_ys))
+    print (instance1.val_xs[:3], instance1.val_ys[:3])
     x_, y_ = instance1.load_one_batch(16, 'train')
-    print x_.shape, y_.shape
+    print (x_.shape, y_.shape)
     x_, y_ = instance1.load_one_batch(16, 'val')
-    print x_.shape, y_.shape
+    print (x_.shape, y_.shape)
     x_, y_ = instance1.load_val_all(16)
-    print len(x_), len(y_)
-    print x_[0].shape
-    print x_[len(x_) - 1].shape
+    print (len(x_), len(y_))
+    print (x_[0].shape)
+    print (x_[len(x_) - 1].shape)
 
-    instance2 = DVR_FMAP_Provider(input_dir1='data/DVR/', input_dir2='data/frp/')
-    print len(instance2.xs1), len(instance2.xs2), len(instance2.ys)
-    print len(instance2.train_xs1), len(instance2.train_xs2), len(instance2.train_ys)
-    print len(instance2.val_xs1), len(instance2.val_xs2), len(instance2.val_ys)
-    print instance2.val_xs1[:3], instance2.val_xs2[:3], instance2.val_ys[:3]
+    instance2 = DVR_FMAP_Provider(input_dir1='data/demo/DVR/', input_dir2='data/demo/fmap/')
+    print (len(instance2.xs1), len(instance2.xs2), len(instance2.ys))
+    print (len(instance2.train_xs1), len(instance2.train_xs2), len(instance2.train_ys))
+    print (len(instance2.val_xs1), len(instance2.val_xs2), len(instance2.val_ys))
+    print (instance2.val_xs1[:3], instance2.val_xs2[:3], instance2.val_ys[:3])
     for i in range(1):
         x1_, x2_, y_ = instance2.load_one_batch(156, 'train')
-        print x1_.shape, x2_.shape, y_.shape
+        print (x1_.shape, x2_.shape, y_.shape)
     x1_, x2_, y_ = instance2.load_val_all(16)
-    print len(x1_), len(x2_), len(y_)
-    print x1_[0].shape
-    print x2_[len(x1_) - 1].shape
-    print y_[2].shape
+    print (len(x1_), len(x2_), len(y_))
+    print (x1_[0].shape)
+    print (x2_[len(x1_) - 1].shape)
+    print (y_[2].shape)
 
     instance3 = DVR_Points_Provider()
-    print len(instance3.xs1), len(instance3.xs2), len(instance3.ys)
-    print len(instance3.train_xs1), len(instance3.train_xs2), len(instance3.train_ys)
-    print len(instance3.val_xs1), len(instance3.val_xs2), len(instance3.val_ys)
-    print instance3.val_xs1[:3], instance3.val_xs2[:3], instance3.val_ys[:3]
-    print instance3.xs2[0]
+    print (len(instance3.xs1), len(instance3.xs2), len(instance3.ys))
+    print (len(instance3.train_xs1), len(instance3.train_xs2), len(instance3.train_ys))
+    print (len(instance3.val_xs1), len(instance3.val_xs2), len(instance3.val_ys))
+    print (instance3.val_xs1[:3], instance3.val_xs2[:3], instance3.val_ys[:3])
+    print (instance3.xs2[0])
     x1_, x2_, y_ = instance3.load_val_all(16)
-    print len(x1_), len(x2_), len(y_)
-    print x2_[0].shape
+    print (len(x1_), len(x2_), len(y_))
+    print (x2_[0].shape)
     for i in range(1):
         x1_, x2_, y_ = instance3.load_one_batch(156, 'train')
-        print x1_.shape, x2_.shape, y_.shape
-
+        print (x1_.shape, x2_.shape, y_.shape)
+    '''
 
 if __name__ == "__main__":
     testProvider()

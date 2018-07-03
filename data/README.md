@@ -1,4 +1,11 @@
-Download DBNet demo data and organize the folders as follows:
+## Home of DBNet data
+
+This is the home 
+### dbnet-2018
+Download DBNet-2018 challenge data [here]() and organize the folders as follows (in `dbnet-2018/`):
+
+### demo
+Download DBNet demo data [here]() and organize the folders as follows (in `demo`):
 
 ```
 ├── data.csv
