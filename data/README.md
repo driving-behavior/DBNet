@@ -1,4 +1,4 @@
-## Home Directory of DBNet data
+## Home Directory of DBNet Data
 
 This is the place where DBNet data are placed in order to fit the default path in `../provider.py`. In total, two kinds of prepared data are provided, which are listed in `dbnet-2018` and `demo` folder, respectively.
 
