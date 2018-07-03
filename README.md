@@ -4,7 +4,7 @@
 
 Extensive experiments demonstrate that extra depth information helps networks to determine driving policies indeed. We hope it will become a useful resource for autonomous driving research community.
 
-_Created by Yiping Chen*, Jingkang Wang*, Jonathan Li, Cewu Lu, Zhipeng Luo, HanXue and Cheng Wang. (*equal contribution)_
+_Created by [Yiping Chen*](https://scholar.google.com/citations?user=e9lv2fUAAAAJ&hl=en), [Jingkang Wang*](https://wangjksjtu.github.io/), [Jonathan Li](https://uwaterloo.ca/mobile-sensing/people-profiles/jonathan-li), [Cewu Lu](http://www.mvig.org/), Zhipeng Luo, HanXue and [Cheng Wang](http://chwang.xmu.edu.cn/). (*equal contribution)_
 
 ## Contents
 1. [Introduction](#introduction)
