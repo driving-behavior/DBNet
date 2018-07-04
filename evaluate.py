@@ -20,13 +20,13 @@ parser.add_argument('--gpu', type=int, default=0,
                     help='GPU to use [default: GPU 0]')
 parser.add_argument('--model', default='nvidia_pn',
                     help='Model name [default: nvidia_pn]')
-parser.add_argument('--model_path', default='logs/nvidia_pn/model.ckpt', 
+parser.add_argument('--model_path', default='logs/nvidia_pn/model.ckpt',
                     help='Model checkpoint file path [default: logs/nvidia_pn/model.ckpt]')
 parser.add_argument('--max_epoch', type=int, default=250,
                     help='Epoch to run [default: 250]')
 parser.add_argument('--batch_size', type=int, default=8,
                     help='Batch Size during training [default: 8]')
-parser.add_argument('--dump_dir', default='dumps', 
+parser.add_argument('--dump_dir', default='dumps',
                     help='Dump folder path [dumps]')
 
 FLAGS = parser.parse_args()
@@ -39,7 +39,7 @@ MODEL = importlib.import_module(FLAGS.model)  # import network module
 MODEL_FILE = os.path.join(BASE_DIR, 'models', FLAGS.model+'.py')
 
 DUMP_DIR = os.path.join(FLAGS.dump_dir, FLAGS.model)
-if not os.path.exists(DUMP_DIR): 
+if not os.path.exists(DUMP_DIR):
     os.makedirs(DUMP_DIR)
 LOG_FOUT = open(os.path.join(DUMP_DIR, 'log_evaluate.txt'), 'w')
 LOG_FOUT.write(str(FLAGS)+'\n')
@@ -96,11 +96,13 @@ def eval_one_epoch(sess, ops, data_input):
 
     num_batches = data_input.num_val // BATCH_SIZE
     loss_sum = 0
-    acc_a_sum = 0
-    acc_s_sum = 0
+    acc_a_sum = [0] * 5
+    acc_s_sum = [0] * 5
 
     preds = []
     labels_total = []
+    acc_a = [0] * 5
+    acc_s = [0] * 5
     for batch_idx in range(num_batches):
         if "io" in MODEL_FILE:
             imgs, labels = data_input.load_one_batch(BATCH_SIZE, "val")
@@ -120,30 +122,32 @@ def eval_one_epoch(sess, ops, data_input):
         preds.append(pred_val)
         labels_total.append(labels)
         loss_sum += np.mean(np.square(np.subtract(pred_val, labels)))
-        acc_a = np.abs(np.subtract(pred_val[:, 1], labels[:, 1])) < (5.0 / 180 * scipy.pi)
-        acc_a = np.mean(acc_a)
-        acc_a_sum += acc_a
-        acc_s = np.abs(np.subtract(pred_val[:, 0], labels[:, 0])) < (5.0 / 20)
-        acc_s = np.mean(acc_s)
-        acc_s_sum += acc_s
+        for i in range(5):
+            acc_a[i] = np.mean(np.abs(np.subtract(pred_val[:, 1], labels[:, 1])) < (1.0 * (i+1) / 180 * scipy.pi))
+            acc_a_sum[i] += acc_a[i]
+            acc_s[i] = np.mean(np.abs(np.subtract(pred_val[:, 0], labels[:, 0])) < (1.0 * (i+1) / 20))
+            acc_s_sum[i] += acc_s[i]
 
     log_string('eval mean loss: %f' % (loss_sum / float(num_batches)))
-    log_string('eval accuracy (angle): %f' % (acc_a_sum / float(num_batches)))
-    log_string('eval accuracy (speed): %f' % (acc_s_sum / float(num_batches)))
+    for i in range(5):
+        log_string('eval accuracy (angle-%d): %f' % (float(i+1), (acc_a_sum[i] / float(num_batches))))
+        log_string('eval accuracy (speed-%d): %f' % (float(i+1), (acc_s_sum[i] / float(num_batches))))
 
-    print (len(preds), preds[0].shape)
     preds = np.vstack(preds)
     labels = np.vstack(labels_total)
 
     a_error, s_error = mean_max_error(preds, labels, dicts=get_dicts())
-    log_string('eval error (mean-max): angle:%.2f speed:%.2f' % 
+    log_string('eval error (mean-max): angle:%.2f speed:%.2f' %
                (a_error / scipy.pi * 180, s_error * 20))
-    a_error, s_error = max_max_error(preds, labels, dicts=get_dicts())
-    log_string('eval error (max-max): angle:%.2f speed:%.2f' % 
+    a_error, s_error = max_error(preds, labels)
+    log_string('eval error (max): angle:%.2f speed:%.2f' %
+               (a_error / scipy.pi * 180, s_error * 20))
+    a_error, s_error = mean_topk_error(preds, labels, 5)
+    log_string('eval error (mean-top5): angle:%.2f speed:%.2f' %
                (a_error / scipy.pi * 180, s_error * 20))
     a_error, s_error = mean_error(preds, labels)
-    log_string('eval error (mean): angle:%.2f speed:%.2f' % 
-               (a_error / scipy.pi * 180, s_error * 20))    
+    log_string('eval error (mean): angle:%.2f speed:%.2f' %
+               (a_error / scipy.pi * 180, s_error * 20))
 
     print (preds.shape, labels.shape)
     np.savetxt(os.path.join(DUMP_DIR, "preds.txt"), preds)
@@ -160,7 +164,7 @@ def plot_acc(preds, labels, counts = 100):
     for i in range(counts):
         acc_s = np.abs(np.subtract(preds[:, 0], labels[:, 0])) < (15.0 / 20 / counts * i)
         s_list.append(np.mean(acc_s))
-    
+
     print (len(a_list), len(s_list))
     a_xaxis = [20.0 / counts * i for i in range(counts)]
     s_xaxis = [15.0 / counts * i for i in range(counts)]
@@ -175,7 +179,7 @@ def plot_acc(preds, labels, counts = 100):
     plt.xlabel("Threshold (angle)")
     plt.ylabel("Validation accuracy")
     plt.savefig(os.path.join(DUMP_DIR, "acc_angle.png"))
-    plt.figure()    
+    plt.figure()
     plt.plot(s_xaxis, np.array(s_list), label='Area Under Curve (AUC): %f' % auc_speed)
     plt.xlabel("Threshold (speed)")
     plt.ylabel("Validation accuracy")
@@ -209,18 +213,16 @@ def mean_max_error(preds, labels, dicts):
         cnt += i
     return a_error / float(len(dicts)), s_error / float(len(dicts))
 
-def max_max_error(preds, labels, dicts):
-    cnt = 0
-    a_error = []
-    s_error = []
-    for i in dicts:
-        a_error.append(np.max(np.abs(preds[cnt:cnt+i, 1] - labels[cnt:cnt+i, 1])))
-        s_error.append(np.max(np.abs(preds[cnt:cnt+i, 0] - labels[cnt:cnt+i, 0])))
-        cnt += i
-    return np.max(np.asarray(a_error)), np.max(np.asarray(s_error))
+def max_error(preds, labels):
+    return np.max(np.abs(preds[:,1] - labels[:,1])), np.max(np.abs(preds[:, 0] - labels[:, 0]))
 
 def mean_error(preds, labels):
     return np.mean(np.abs(preds[:,1] - labels[:,1])), np.mean(np.abs(preds[:,0] - labels[:,0]))
+
+def mean_topk_error(preds, labels, k):
+    a_error = np.abs(preds[:,1] - labels[:,1])
+    s_error = np.abs(preds[:,0] - labels[:,0])
+    return np.mean(np.sort(a_error)[::-1][0:k]), np.mean(np.sort(s_error)[::-1][0:k])
 
 if __name__ == "__main__":
     evaluate()
