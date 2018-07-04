@@ -7,4 +7,5 @@ data/demo/DVR
 data/demo/fmap
 data/demo/points_16384
 logs/
-dumps/
+results/
+dbnet_test.py

@@ -26,8 +26,8 @@ parser.add_argument('--max_epoch', type=int, default=250,
                     help='Epoch to run [default: 250]')
 parser.add_argument('--batch_size', type=int, default=8,
                     help='Batch Size during training [default: 8]')
-parser.add_argument('--dump_dir', default='dumps',
-                    help='Dump folder path [dumps]')
+parser.add_argument('--result_dir', default='results',
+                    help='Result folder path [results]')
 
 FLAGS = parser.parse_args()
 BATCH_SIZE = FLAGS.batch_size
@@ -38,10 +38,10 @@ assert (FLAGS.model == "nvidia_pn")
 MODEL = importlib.import_module(FLAGS.model)  # import network module
 MODEL_FILE = os.path.join(BASE_DIR, 'models', FLAGS.model+'.py')
 
-DUMP_DIR = os.path.join(FLAGS.dump_dir, FLAGS.model)
-if not os.path.exists(DUMP_DIR):
-    os.makedirs(DUMP_DIR)
-LOG_FOUT = open(os.path.join(DUMP_DIR, 'log_evaluate.txt'), 'w')
+RESULT_DIR = os.path.join(FLAGS.result_dir, FLAGS.model)
+if not os.path.exists(RESULT_DIR):
+    os.makedirs(RESULT_DIR)
+LOG_FOUT = open(os.path.join(RESULT_DIR, 'log_evaluate.txt'), 'w')
 LOG_FOUT.write(str(FLAGS)+'\n')
 
 
@@ -95,7 +95,6 @@ def eval_one_epoch(sess, ops, data_input):
     loss_sum = 0
 
     num_batches = data_input.num_val // BATCH_SIZE
-    loss_sum = 0
     acc_a_sum = [0] * 5
     acc_s_sum = [0] * 5
 
@@ -150,8 +149,8 @@ def eval_one_epoch(sess, ops, data_input):
                (a_error / scipy.pi * 180, s_error * 20))
 
     print (preds.shape, labels.shape)
-    np.savetxt(os.path.join(DUMP_DIR, "preds.txt"), preds)
-    np.savetxt(os.path.join(DUMP_DIR, "labels.txt"), labels)
+    np.savetxt(os.path.join(RESULT_DIR, "preds_val.txt"), preds)
+    np.savetxt(os.path.join(RESULT_DIR, "labels_val.txt"), labels)
     # plot_acc(preds, labels)
 
 def plot_acc(preds, labels, counts = 100):
@@ -178,17 +177,17 @@ def plot_acc(preds, labels, counts = 100):
     plt.legend(loc='best')
     plt.xlabel("Threshold (angle)")
     plt.ylabel("Validation accuracy")
-    plt.savefig(os.path.join(DUMP_DIR, "acc_angle.png"))
+    plt.savefig(os.path.join(RESULT_DIR, "acc_angle.png"))
     plt.figure()
     plt.plot(s_xaxis, np.array(s_list), label='Area Under Curve (AUC): %f' % auc_speed)
     plt.xlabel("Threshold (speed)")
     plt.ylabel("Validation accuracy")
     plt.legend(loc='best')
-    plt.savefig(os.path.join(DUMP_DIR, 'acc_spped.png'))
+    plt.savefig(os.path.join(RESULT_DIR, 'acc_spped.png'))
 
 def plot_acc_from_txt(counts=100):
-    preds = np.loadtxt(os.path.join(DUMP_DIR, "preds.txt"))
-    labels = np.loadtxt(os.path.join(DUMP_DIR, "labels.txt"))
+    preds = np.loadtxt(os.path.join(RESULT_DIR, "preds_val.txt"))
+    labels = np.loadtxt(os.path.join(RESULT_DIR, "labels_val.txt"))
     print (preds.shape, labels.shape)
     plot_acc(preds, labels, counts)
 

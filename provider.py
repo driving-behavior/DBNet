@@ -175,44 +175,8 @@ class Provider:
         if not description == "test":
             return np.stack(x_out1), np.stack(x_out2), np.stack(y_out)
         else:
-            return np.stack(x_out1), np.stack(x_out2) 
-
-    def load_val_all(self, batch_size, shape=[66, 200]):
-        x_out1 = []
-        x_out2 = []
-        y_out = []
-        index = 0
-        iteration = int(ceil(len(self.X_val1) / float(batch_size)))
-        for i in range(iteration):
-            xs1 = []
-            xs2 = []
-            ys = []
-            if i == iteration - 1:
-                for i in range(index, len(self.X_val1)):
-                    xs1.append(scipy.misc.imresize(scipy.misc.imread(
-                               self.X_val1[i]), shape) / 255.0)
-                    infile = laspy.file.File(self.X_val2[i])
-                    data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
-                    xs2.append(data)
-
-                    ys.append(self.Y_val[i])
-            else:
-                for i in range(0, batch_size):
-                    xs1.append(scipy.misc.imresize(scipy.misc.imread(
-                               self.X_val1[index + i]), shape) / 255.0)
-                    infile = laspy.file.File(self.X_val2[index + i])
-                    data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
-                    xs2.append(data)
-                    ys.append(self.Y_val[index + i])
-
-                index += batch_size
-
-            x_out1.append(np.stack(xs1))
-            x_out2.append(np.stack(xs2))
-            y_out.append(np.stack(ys))
-        return np.asarray(x_out1), np.asarray(x_out2), np.asarray(y_out)
-
-
+            return np.stack(x_out1), np.stack(x_out2)
+    
 class DVR_Provider:
     def __init__(self, input_dir='data/demo/DVR/'):
         self.xs = []
@@ -574,9 +538,6 @@ def testProvider():
     print (len(instance0.X_test1), len(instance0.X_test2))
     print (instance0.X_val1[:3], instance0.X_val2[:3])
     print (instance0.X_val2[0])
-    x1_, x2_, y_ = instance0.load_val_all(16)
-    print (len(x1_), len(x2_), len(y_))
-    print (x2_[0].shape)
     for i in range(1):
         x1_, x2_, y_ = instance0.load_one_batch(156, 'train')
         print (x1_.shape, x2_.shape, y_.shape)
