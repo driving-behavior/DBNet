@@ -6,6 +6,8 @@ Extensive experiments demonstrate that extra depth information helps networks to
 
 _Created by [Yiping Chen*](https://scholar.google.com/citations?user=e9lv2fUAAAAJ&hl=en), [Jingkang Wang*](https://wangjksjtu.github.io/), [Jonathan Li](https://uwaterloo.ca/mobile-sensing/people-profiles/jonathan-li), [Cewu Lu](http://www.mvig.org/), Zhipeng Luo, HanXue and [Cheng Wang](http://chwang.xmu.edu.cn/). (*equal contribution)_
 
+The resources of our work are available: [[paper]](http://openaccess.thecvf.com/content_cvpr_2018/papers/Chen_LiDAR-Video_Driving_Dataset_CVPR_2018_paper.pdf), [[code]](https://github.com/driving-behavior/DBNet), [[video]](http://www.drivingbehavior.org/data/demo.mp4), [[website]](http://www.drivingbehavior.org/), [[challenge]](http://www.drivingbehavior.org/task.html)
+
 ## Contents
 1. [Introduction](#introduction)
 2. [Requirements](#requirements)
