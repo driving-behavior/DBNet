@@ -45,6 +45,10 @@ We can use TensorBoard to view the network architecture and monitor the training
 
     tensorboard --logdir logs
 
+## Baseline
+<table style="undefined;table-layout: fixed; width: 512px"><colgroup><col style="width: 68px"><col style="width: 106px"><col style="width: 66px"><col style="width: 88px"><col style="width: 54px"><col style="width: 46px"><col style="width: 38px"><col style="width: 46px"></colgroup><tr><th>Method</th><th colspan="2">Setting</th><th>Accuracy</th><th>AUC</th><th>ME</th><th>AE</th><th>AME</th></tr><tr><td rowspan="2">nvidia-pn</td><td rowspan="2">Videos + Laser Points</td><td>angle</td><td>70.65% (&lt;5)</td><td>0.7799 </td><td>29.46</td><td>4.23</td><td>20.88</td></tr><tr><td>speed</td><td>82.21% (&lt;3)</td><td>0.8701</td><td>18.56</td><td>1.80</td><td>9.68</td></tr></table>
+
+
 ## Contributors
 DBNet was developed by [MVIG](http://www.mvig.org/), Shanghai Jiao Tong University* and [SCSC](http://scsc.xmu.edu.cn/) Lab, Xiamen University* (*alphabetical order*).
 
