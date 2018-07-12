@@ -12,6 +12,7 @@ from PIL import Image
 import laspy
 
 
+# Data providers for dbnet-2018 data
 class Provider:
     def __init__(self, train_dir='data/dbnet-2018/train/',
                  val_dir='data/dbnet-2018/val/',
@@ -197,7 +198,91 @@ class Provider:
         else:
             if reader_type == "io": return np.stack(x_out1)
             else: return np.stack(x_out1), np.stack(x_out2)
-    
+
+
+## Data provider for test in server
+class Provider2:
+    def __init__(self, test_dir="data/dbnet-2018/test/"):
+
+        self.__initialize__(test_dir)
+        self.read()
+        self.transform()
+
+    def __initialize__(self, test_dir):
+        self.X_test1, self.X_test2 = [], []
+        self.Y_test1, self.Y_test2 = [], []
+        self.x_test1, self.x_test2 = [], []
+        self.test_pointer = 0
+        self.test_dir = test_dir
+        self.cache_test = False
+
+    def read(self, filename="behavior.csv"):
+        """
+        Read data and labels
+            :param filename: filename of labels
+        """
+        test_sub = glob.glob(os.path.join(self.test_dir, "*"))
+        test_sub.sort()
+        self.read_from(test_sub, filename)
+
+    def read_from(self, sub_folders, filename):
+        X_test1, X_test2 = self.X_test1, self.X_test2
+        Y_test1, Y_test2 = self.Y_test1, self.Y_test2
+        
+        for folder in sub_folders:
+            with open(os.path.join(folder, filename)) as f:
+                count = 0
+                for line in f:
+                    line = line.rstrip()
+                    X_test1.append(os.path.join(folder, "dvr_66x200/" + str(count) + ".jpg"))
+                    X_test2.append(os.path.join(folder, "points_16384/" + str(count) + ".las"))
+                    Y_test1.append((float(line.split(",")[1]) - 20) / 20)
+                    Y_test2.append(float(line.split(",")[0]) * scipy.pi / 180)
+                    count += 1
+
+        c = list(zip(X_test1, X_test2, Y_test1, Y_test2))
+        # random.shuffle(c)
+
+        self.X_test1, self.X_test2, self.Y_test1, self.Y_test2 = zip(*c)
+
+    def transform(self):
+        self.num_test = len(self.X_test1)
+        self.X_test1, self.X_test2 = np.asarray(self.X_test1), np.asarray(self.X_test2)
+        self.Y_test = np.transpose(np.asarray((self.Y_test1, self.Y_test2)))
+
+    def load_one_batch(self, batch_size, shape=[66, 200], reader_type="pn"):
+        x_out1 = []
+        x_out2 = []
+        y_out = []
+
+        if not self.cache_test:
+            print ("Loading testing data ...")
+            for i in range(0, self.num_test):
+                with Image.open(self.X_test1[i]) as img:
+                    self.x_test1.append(scipy.misc.imresize(img, shape) / 255.0)
+                """
+                self.x_test1.append(scipy.misc.imresize(scipy.misc.imread(
+                            self.X_test1[i]), shape) / 255.0)
+                """
+                infile = laspy.file.File(self.X_test2[i])
+                data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
+                infile.close()
+                self.x_test2.append(data)
+                self.cache_test = True
+            print ("Finished loading!")
+
+        for i in range(0, batch_size):
+            index = (self.test_pointer + i) % len(self.X_test1)
+            x_out1.append(self.x_test1[index])
+            x_out2.append(self.x_test2[index])
+            y_out.append(self.Y_test[index])
+            self.test_pointer += batch_size
+
+        if reader_type == "io": return np.stack(x_out1), np.stack(y_out)
+        else: return np.stack(x_out1), np.stack(x_out2), np.stack(y_out)
+
+
+# Data providers for demo data
 class DVR_Provider:
     def __init__(self, input_dir='data/demo/DVR/'):
         self.xs = []

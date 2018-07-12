@@ -4,13 +4,12 @@ import os
 import sys
 import time
 
+# import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 
 import provider
 import tensorflow as tf
-
-# import matplotlib.pyplot as plt
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(BASE_DIR, 'models'))
@@ -20,14 +19,16 @@ parser.add_argument('--gpu', type=int, default=0,
                     help='GPU to use [default: GPU 0]')
 parser.add_argument('--model', default='nvidia_pn',
                     help='Model name [default: nvidia_pn]')
-parser.add_argument('--model_path', default='logs/nvidia_pn/model.ckpt',
-                    help='Model checkpoint file path [default: logs/nvidia_pn/model.ckpt]')
+parser.add_argument('--model_path', default='logs/nvidia_pn/model_best.ckpt',
+                    help='Model checkpoint file path [default: logs/nvidia_pn/model_best.ckpt]')
 parser.add_argument('--max_epoch', type=int, default=250,
                     help='Epoch to run [default: 250]')
 parser.add_argument('--batch_size', type=int, default=8,
                     help='Batch Size during training [default: 8]')
 parser.add_argument('--result_dir', default='results',
-                    help='Result folder path [results]')
+                    help='Result folder path [default: results]')
+parser.add_argument('--test', type=bool, default=False, # only used in test server
+                    help='Get performance on test data [default: False]')
 
 FLAGS = parser.parse_args()
 BATCH_SIZE = FLAGS.batch_size
@@ -41,8 +42,18 @@ MODEL_FILE = os.path.join(BASE_DIR, 'models', FLAGS.model+'.py')
 RESULT_DIR = os.path.join(FLAGS.result_dir, FLAGS.model)
 if not os.path.exists(RESULT_DIR):
     os.makedirs(RESULT_DIR)
-LOG_FOUT = open(os.path.join(RESULT_DIR, 'log_evaluate.txt'), 'w')
-LOG_FOUT.write(str(FLAGS)+'\n')
+if FLAGS.test:
+    TEST_RESULT_DIR = os.path.join(RESULT_DIR, "test")
+    if not os.path.exists(TEST_RESULT_DIR):
+        os.makedirs(TEST_RESULT_DIR)
+    LOG_FOUT = open(os.path.join(TEST_RESULT_DIR, 'log_evaluate.txt'), 'w')
+    LOG_FOUT.write(str(FLAGS)+'\n')
+else:
+    VAL_RESULT_DIR = os.path.join(RESULT_DIR, "test")
+    if not os.path.exists(VAL_RESULT_DIR):
+        os.makedirs(VAL_RESULT_DIR)
+    LOG_FOUT = open(os.path.join(VAL_RESULT_DIR, 'log_evaluate.txt'), 'w')
+    LOG_FOUT.write(str(FLAGS)+'\n')
 
 
 def log_string(out_str):
@@ -88,6 +99,7 @@ def evaluate():
             'loss': loss}
 
     eval_one_epoch(sess, ops, data_input)
+
 
 def eval_one_epoch(sess, ops, data_input):
     """ ops: dict mapping from string to tf ops """
@@ -149,9 +161,115 @@ def eval_one_epoch(sess, ops, data_input):
                (a_error / scipy.pi * 180, s_error * 20))
 
     print (preds.shape, labels.shape)
-    np.savetxt(os.path.join(RESULT_DIR, "preds_val.txt"), preds)
-    np.savetxt(os.path.join(RESULT_DIR, "labels_val.txt"), labels)
+    np.savetxt(os.path.join(VAL_RESULT_DIR, "preds_val.txt"), preds)
+    np.savetxt(os.path.join(VAL_RESULT_DIR, "labels_val.txt"), labels)
     # plot_acc(preds, labels)
+
+
+def test():
+    with tf.device('/gpu:'+str(GPU_INDEX)):
+        if 'pn' in MODEL_FILE:
+            data_input = provider.Provider2()
+            imgs_pl, pts_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE)
+            imgs_pl = [imgs_pl, pts_pl]
+        else:
+            raise NotImplementedError
+
+        is_training_pl = tf.placeholder(tf.bool, shape=())
+        print(is_training_pl)
+
+        # Get model and loss
+        pred = MODEL.get_model(imgs_pl, is_training_pl)
+
+        loss = MODEL.get_loss(pred, labels_pl)
+
+        # Add ops to save and restore all the variables.
+        saver = tf.train.Saver()
+
+    # Create a session
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    config.allow_soft_placement = True
+    config.log_device_placement = True
+    sess = tf.Session(config=config)
+
+    # Restore variables from disk.
+    saver.restore(sess, MODEL_PATH)
+    log_string("Model restored.")
+
+    ops = {'imgs_pl': imgs_pl,
+            'labels_pl': labels_pl,
+            'is_training_pl': is_training_pl,
+            'pred': pred,
+            'loss': loss}
+
+    test_one_epoch(sess, ops, data_input)
+
+
+def test_one_epoch(sess, ops, data_input):
+    """ ops: dict mapping from string to tf ops """
+    is_training = False
+    loss_sum = 0
+
+    num_batches = data_input.num_test // BATCH_SIZE
+    acc_a_sum = [0] * 5
+    acc_s_sum = [0] * 5
+
+    preds = []
+    labels_total = []
+    acc_a = [0] * 5
+    acc_s = [0] * 5
+    for batch_idx in range(num_batches):
+        if "io" in MODEL_FILE:
+            imgs, labels = data_input.load_one_batch(BATCH_SIZE)
+            feed_dict = {ops['imgs_pl']: imgs,
+                         ops['labels_pl']: labels,
+                         ops['is_training_pl']: is_training}
+        else:
+            imgs, others, labels = data_input.load_one_batch(BATCH_SIZE)
+            feed_dict = {ops['imgs_pl'][0]: imgs,
+                         ops['imgs_pl'][1]: others,
+                         ops['labels_pl']: labels,
+                         ops['is_training_pl']: is_training}
+
+        loss_val, pred_val = sess.run([ops['loss'], ops['pred']],
+                                    feed_dict=feed_dict)
+
+        preds.append(pred_val)
+        labels_total.append(labels)
+        loss_sum += np.mean(np.square(np.subtract(pred_val, labels)))
+        for i in range(5):
+            acc_a[i] = np.mean(np.abs(np.subtract(pred_val[:, 1], labels[:, 1])) < (1.0 * (i+1) / 180 * scipy.pi))
+            acc_a_sum[i] += acc_a[i]
+            acc_s[i] = np.mean(np.abs(np.subtract(pred_val[:, 0], labels[:, 0])) < (1.0 * (i+1) / 20))
+            acc_s_sum[i] += acc_s[i]
+
+    log_string('eval mean loss: %f' % (loss_sum / float(num_batches)))
+    for i in range(5):
+        log_string('eval accuracy (angle-%d): %f' % (float(i+1), (acc_a_sum[i] / float(num_batches))))
+        log_string('eval accuracy (speed-%d): %f' % (float(i+1), (acc_s_sum[i] / float(num_batches))))
+
+    preds = np.vstack(preds)
+    labels = np.vstack(labels_total)
+
+    a_error, s_error = mean_max_error(preds, labels, dicts=get_dicts())
+    log_string('eval error (mean-max): angle:%.2f speed:%.2f' %
+               (a_error / scipy.pi * 180, s_error * 20))
+    a_error, s_error = max_error(preds, labels)
+    log_string('eval error (max): angle:%.2f speed:%.2f' %
+               (a_error / scipy.pi * 180, s_error * 20))
+    a_error, s_error = mean_topk_error(preds, labels, 5)
+    log_string('eval error (mean-top5): angle:%.2f speed:%.2f' %
+               (a_error / scipy.pi * 180, s_error * 20))
+    a_error, s_error = mean_error(preds, labels)
+    log_string('eval error (mean): angle:%.2f speed:%.2f' %
+               (a_error / scipy.pi * 180, s_error * 20))
+
+    print (preds.shape, labels.shape)
+    np.savetxt(os.path.join(TEST_RESULT_DIR, "preds_val.txt"), preds)
+    np.savetxt(os.path.join(TEST_RESULT_DIR, "labels_val.txt"), labels)
+    # plot_acc(preds, labels)
+
 
 def plot_acc(preds, labels, counts = 100):
     a_list = []
@@ -186,8 +304,8 @@ def plot_acc(preds, labels, counts = 100):
     plt.savefig(os.path.join(RESULT_DIR, 'acc_spped.png'))
 
 def plot_acc_from_txt(counts=100):
-    preds = np.loadtxt(os.path.join(RESULT_DIR, "preds_val.txt"))
-    labels = np.loadtxt(os.path.join(RESULT_DIR, "labels_val.txt"))
+    preds = np.loadtxt(os.path.join(RESULT_DIR, "test/preds_val.txt"))
+    labels = np.loadtxt(os.path.join(RESULT_DIR, "test/labels_val.txt"))
     print (preds.shape, labels.shape)
     plot_acc(preds, labels, counts)
 
@@ -224,5 +342,6 @@ def mean_topk_error(preds, labels, k):
     return np.mean(np.sort(a_error)[::-1][0:k]), np.mean(np.sort(s_error)[::-1][0:k])
 
 if __name__ == "__main__":
-    evaluate()
+    test()
+    # evaluate()
     # plot_acc_from_txt()
