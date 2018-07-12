@@ -41,7 +41,7 @@ MODEL_FILE = os.path.join(BASE_DIR, 'models', FLAGS.model+'.py')
 RESULT_DIR = os.path.join(FLAGS.result_dir, FLAGS.model)
 if not os.path.exists(RESULT_DIR):
     os.makedirs(RESULT_DIR)
-LOG_FOUT = open(os.path.join(RESULT_DIR, 'predict.txt'), 'w')
+LOG_FOUT = open(os.path.join(RESULT_DIR, 'log_predict.txt'), 'w')
 LOG_FOUT.write(str(FLAGS)+'\n')
 
 
@@ -111,8 +111,8 @@ def pred_one_epoch(sess, ops, data_input):
 
     preds = np.vstack(preds)
     print (preds.shape)
-    preds[:, 1] *= 180 / scipy.pi
-    preds[:, 0] *= 20
+    # preds[:, 1] = preds[:, 1] * 180.0 / scipy.pi
+    # preds[:, 0] = preds[:, 0] * 20 + 20
 
     np.savetxt(os.path.join(RESULT_DIR, "behavior_pred.txt"), preds)
 

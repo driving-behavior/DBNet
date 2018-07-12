@@ -39,7 +39,7 @@ def get_model(net, is_training, bn_decay=None, separately=False):
                                   bn=True, is_training=is_training,
                                   scope=scope_fmap, bn_decay=bn_decay)
     net = tf.reshape(tf.stack([img_net, fmap_net]), [batch_size, -1])
-    for i, dim in enumerate([1024, 100, 50, 10]):
+    for i, dim in enumerate([256, 100, 50, 10]):
         fc_scope = "fc" + str(i + 1)
         dp_scope = "dp" + str(i + 1)
         net = tf_util.fully_connected(net, dim, bn=True,

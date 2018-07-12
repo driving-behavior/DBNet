@@ -1,13 +1,15 @@
 from __future__ import print_function
 
+import glob
+import os
 import random
 from math import ceil
 
-import laspy
 import numpy as np
 import scipy.misc
-import glob
-import os
+from PIL import Image
+
+import laspy
 
 
 class Provider:
@@ -85,7 +87,7 @@ class Provider:
             c = list(zip(X_train1, X_train2, Y_train1, Y_train2))
         else:
             c = list(zip(X_train1, X_train2))
-        # random.shuffle(c)
+        random.shuffle(c)
 
         if description == "train":
             self.X_train1, self.X_train2, self.Y_train1, self.Y_train2 = zip(*c)
@@ -109,7 +111,7 @@ class Provider:
         self.num_train = len(self.Y_train)
         self.num_val = len(self.Y_val)
 
-    def load_one_batch(self, batch_size, description='train', shape=[66, 200]):
+    def load_one_batch(self, batch_size, description='train', shape=[66, 200], reader_type="pn"):
         x_out1 = []
         x_out2 = []
         y_out = []
@@ -117,10 +119,16 @@ class Provider:
             if not self.cache_train:
                 print ("Loading training data ...")
                 for i in range(self.num_train):
+                    with Image.open(self.X_train1[i]) as img:
+                        self.x_train1.append(scipy.misc.imresize(img, shape) / 255.0)
+                    # too many opened files
+                    """
                     self.x_train1.append(scipy.misc.imresize(scipy.misc.imread(
                               self.X_train1[i]), shape) / 255.0)
+                    """
                     infile = laspy.file.File(self.X_train2[i])
                     data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
+                    infile.close()
                     self.x_train2.append(data)
                     self.cache_train = True
                 print ("Finished loading!")
@@ -136,10 +144,16 @@ class Provider:
             if not self.cache_val:
                 print ("Loading validation data ...")
                 for i in range(0, self.num_val):
+                    with Image.open(self.X_val1[i]) as img:
+                        self.x_val1.append(scipy.misc.imresize(img, shape) / 255.0)
+                    # too many opened files
+                    """
                     self.x_val1.append(scipy.misc.imresize(scipy.misc.imread(
                                 self.X_val1[i]), shape) / 255.0)
+                    """
                     infile = laspy.file.File(self.X_val2[i])
                     data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
+                    infile.close()
                     self.x_val2.append(data)
                     self.cache_val = True
                 print ("Finished loading!")
@@ -155,10 +169,15 @@ class Provider:
             if not self.cache_test:
                 print ("Loading testing data ...")
                 for i in range(0, self.num_test):
+                    with Image.open(self.X_test1[i]) as img:
+                        self.x_test1.append(scipy.misc.imresize(img, shape) / 255.0)
+                    """
                     self.x_test1.append(scipy.misc.imresize(scipy.misc.imread(
                                 self.X_test1[i]), shape) / 255.0)
+                    """
                     infile = laspy.file.File(self.X_test2[i])
                     data = np.vstack([infile.X, infile.Y, infile.Z]).transpose()
+                    infile.close()
                     self.x_test2.append(data)
                     self.cache_test = True
                 print ("Finished loading!")
@@ -173,9 +192,11 @@ class Provider:
             raise NotImplementedError
 
         if not description == "test":
-            return np.stack(x_out1), np.stack(x_out2), np.stack(y_out)
+            if reader_type == "io": return np.stack(x_out1), np.stack(y_out)
+            else: return np.stack(x_out1), np.stack(x_out2), np.stack(y_out)
         else:
-            return np.stack(x_out1), np.stack(x_out2)
+            if reader_type == "io": return np.stack(x_out1)
+            else: return np.stack(x_out1), np.stack(x_out2)
     
 class DVR_Provider:
     def __init__(self, input_dir='data/demo/DVR/'):

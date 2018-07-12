@@ -2,6 +2,8 @@
 
 Author: Charles R. Qi
 Date: November 2016
+
+Updated by wangjksjtu
 """
 
 import numpy as np
@@ -105,8 +107,6 @@ def conv1d(inputs,
     if activation_fn is not None:
       outputs = activation_fn(outputs)
     return outputs
-
-
 
 
 def conv2d(inputs,
@@ -248,7 +248,6 @@ def conv2d_transpose(inputs,
       return outputs
 
    
-
 def conv3d(inputs,
            num_output_channels,
            kernel_size,
@@ -307,6 +306,7 @@ def conv3d(inputs,
     if activation_fn is not None:
       outputs = activation_fn(outputs)
     return outputs
+
 
 def fully_connected(inputs,
                     num_outputs,
@@ -372,6 +372,7 @@ def max_pool2d(inputs,
                              name=sc.name)
     return outputs
 
+
 def avg_pool2d(inputs,
                kernel_size,
                scope,
@@ -423,6 +424,7 @@ def max_pool3d(inputs,
                                name=sc.name)
     return outputs
 
+
 def avg_pool3d(inputs,
                kernel_size,
                scope,
@@ -447,9 +449,6 @@ def avg_pool3d(inputs,
                                padding=padding,
                                name=sc.name)
     return outputs
-
-
-
 
 
 def batch_norm_template(inputs, is_training, scope, moments_dims, bn_decay):
@@ -520,8 +519,6 @@ def batch_norm_for_conv1d(inputs, is_training, bn_decay, scope):
   return batch_norm_template(inputs, is_training, scope, [0,1], bn_decay)
 
 
-
-  
 def batch_norm_for_conv2d(inputs, is_training, bn_decay, scope):
   """ Batch normalization on 2D convolutional maps.
   
@@ -534,7 +531,6 @@ def batch_norm_for_conv2d(inputs, is_training, bn_decay, scope):
       normed:      batch-normalized maps
   """
   return batch_norm_template(inputs, is_training, scope, [0,1,2], bn_decay)
-
 
 
 def batch_norm_for_conv3d(inputs, is_training, bn_decay, scope):
@@ -572,4 +568,35 @@ def dropout(inputs,
     outputs = tf.cond(is_training,
                       lambda: tf.nn.dropout(inputs, keep_prob, noise_shape),
                       lambda: inputs)
+    return outputs
+
+
+def stacked_lstm(inputs,
+                 num_outputs,
+                 time_steps,
+                 scope,
+                 use_xavier=True,
+                 stddev=1e-3,
+                 weight_decay=0.0,
+                 activation_fn=None,
+                 forget_bias=1.0,
+                 bn_decay=None):
+
+  with tf.variable_scope(scope) as sc:
+    num_input_units = inputs.get_shape()[-1].value
+    weights = _variable_with_weight_decay('weights',
+                                          shape=[num_input_units, num_outputs],
+                                          use_xavier=use_xavier,
+                                          stddev=stddev,
+                                          wd=weight_decay)
+    biases = _variable_on_cpu('biases', [num_outputs],
+                             tf.constant_initializer(0.0))
+    lstm_cell = tf.nn.rnn_cell.LSTMCell(num_input_units,
+                                        forget_bias=forget_bias,
+                                        activation=activation_fn)
+    stacked_fs = tf.unstack(inputs, time_steps, 1)
+    outputs, _ = tf.contrib.rnn.static_rnn(lstm_cell,
+                                           stacked_fs,
+                                           dtype=tf.float32)
+    outputs = tf.matmul(outputs[-1], weights) + biases
     return outputs

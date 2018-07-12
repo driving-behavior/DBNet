@@ -9,6 +9,7 @@ import scipy
 
 import provider
 import tensorflow as tf
+import keras
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(BASE_DIR, 'models'))
@@ -18,6 +19,8 @@ parser.add_argument('--gpu', type=int, default=0,
                     help='GPU to use [default: GPU 0]')
 parser.add_argument('--model', default='nvidia_pn',
                     help='Model name [default: nvidia_pn]')
+parser.add_argument('--add_lstm', type=bool, default=False,
+                    help='Introduce LSTM mechanism in netowrk [default: False]')
 parser.add_argument('--log_dir', default='logs',
                     help='Log dir [default: logs]')
 parser.add_argument('--max_epoch', type=int, default=250,
@@ -45,13 +48,18 @@ GPU_INDEX = FLAGS.gpu
 MOMENTUM = FLAGS.momentum
 DECAY_STEP = FLAGS.decay_step
 DECAY_RATE = FLAGS.decay_rate
+ADD_LSTM = FLAGS.add_lstm
 
 BN_INIT_DECAY = 0.5
 BN_DECAY_DECAY_RATE = 0.5
 BN_DECAY_DECAY_STEP = float(DECAY_STEP)
 BN_DECAY_CLIP = 0.99
 
-assert (FLAGS.model == "nvidia_pn")
+supported_models = ["nvidia_io", "nvidia_pn",
+                    "resnet152_io", "resnet152_pn",
+                    "inception_v4_io", "inception_v4_pn",
+                    "densenet169_io", "densenet169_pn"]
+assert (FLAGS.model in supported_models)
 MODEL = importlib.import_module(FLAGS.model)  # import network module
 MODEL_FILE = os.path.join(BASE_DIR, 'models', FLAGS.model+'.py')
 
@@ -99,6 +107,9 @@ def train():
                 data_input = provider.Provider()
                 imgs_pl, pts_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE)
                 imgs_pl = [imgs_pl, pts_pl]
+            elif 'io' in MODEL_FILE:
+                data_input = provider.Provider()
+                imgs_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE)
             else:
                 raise NotImplementedError
 
@@ -158,12 +169,17 @@ def train():
                'merged': merged,
                'step': batch}
 
+        eval_acc_max = 0
         for epoch in range(MAX_EPOCH):
             log_string('**** EPOCH %03d ****' % (epoch))
             sys.stdout.flush()
 
             train_one_epoch(sess, ops, train_writer, data_input)
-            eval_one_epoch(sess, ops, test_writer, data_input)
+            eval_acc = eval_one_epoch(sess, ops, test_writer, data_input)
+            if eval_acc > eval_acc_max:
+                eval_acc_max = eval_acc
+                save_path = saver.save(sess, os.path.join(LOG_DIR, "model_best.ckpt"))
+                log_string("Model saved in file: %s" % save_path)
 
             # Save the variables to disk.
             if epoch % 10 == 0:
@@ -181,13 +197,17 @@ def train_one_epoch(sess, ops, train_writer, data_input):
     counter = 0
 
     for batch_idx in range(num_batches):
-        if "io" in MODEL_FILE:
-            imgs, labels = data_input.load_one_batch(BATCH_SIZE, "train")
+        if "_io" in MODEL_FILE:
+            imgs, labels = data_input.load_one_batch(BATCH_SIZE, "train", reader_type="io")
+            if "resnet" in MODEL_FILE or "inception" in MODEL_FILE or "densenet" in MODEL_FILE:
+                imgs = MODEL.resize(imgs)
             feed_dict = {ops['imgs_pl']: imgs,
                          ops['labels_pl']: labels,
                          ops['is_training_pl']: is_training}
         else:
             imgs, others, labels = data_input.load_one_batch(BATCH_SIZE, "train")
+            if "resnet" in MODEL_FILE or "inception" in MODEL_FILE or "densenet" in MODEL_FILE:              
+                imgs = MODEL.resize(imgs)
             feed_dict = {ops['imgs_pl'][0]: imgs,
                          ops['imgs_pl'][1]: others,
                          ops['labels_pl']: labels,
@@ -231,13 +251,17 @@ def eval_one_epoch(sess, ops, test_writer, data_input):
     acc_s_sum = 0
 
     for batch_idx in range(num_batches):
-        if "io" in MODEL_FILE:
-            imgs, labels = data_input.load_one_batch(BATCH_SIZE, "val")
+        if "_io" in MODEL_FILE:
+            imgs, labels = data_input.load_one_batch(BATCH_SIZE, "val", reader_type="io")
+            if "resnet" in MODEL_FILE or "inception" in MODEL_FILE or "densenet" in MODEL_FILE:
+                imgs = MODEL.resize(imgs)
             feed_dict = {ops['imgs_pl']: imgs,
                          ops['labels_pl']: labels,
                          ops['is_training_pl']: is_training}
         else:
             imgs, others, labels = data_input.load_one_batch(BATCH_SIZE, "val")
+            if "resnet" in MODEL_FILE or "inception" in MODEL_FILE or "densenet" in MODEL_FILE:
+                imgs = MODEL.resize(imgs)
             feed_dict = {ops['imgs_pl'][0]: imgs,
                          ops['imgs_pl'][1]: others,
                          ops['labels_pl']: labels,
@@ -260,6 +284,7 @@ def eval_one_epoch(sess, ops, test_writer, data_input):
     log_string('eval mean loss: %f' % (loss_sum / float(num_batches)))
     log_string('eval accuracy (angle): %f' % (acc_a_sum / float(num_batches)))
     log_string('eval accuracy (speed): %f' % (acc_s_sum / float(num_batches)))
+    return acc_a_sum / float(num_batches)
 
 
 if __name__ == "__main__":

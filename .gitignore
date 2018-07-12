@@ -9,3 +9,4 @@ data/demo/points_16384
 logs/
 results/
 dbnet_test.py
+utils/weights/*.h5

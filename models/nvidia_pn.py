@@ -3,6 +3,7 @@ import sys
 
 import tensorflow as tf
 import scipy
+import numpy as np
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(BASE_DIR, '../utils'))
@@ -35,13 +36,13 @@ def get_model(net, is_training, bn_decay=None, separately=False):
                                  scope=scope, bn_decay=bn_decay)
 
     img_net = tf.reshape(img_net, [batch_size, -1])
-    img_net = tf_util.fully_connected(img_net, 512, bn=True,
+    img_net = tf_util.fully_connected(img_net, 256, bn=True,
                                       is_training=is_training,
                                       scope='img_fc0',
                                       bn_decay=bn_decay)
     with tf.variable_scope('pointnet'):
         pt_net = pointnet.get_model(pt_net, tf.constant(True))
-    net = tf.reshape(tf.stack([img_net, pt_net], axis=2), [batch_size, 1024])
+    net = tf.reshape(tf.stack([img_net, pt_net], axis=2), [batch_size, 512])
 
     for i, dim in enumerate([256, 128, 16]):
         fc_scope = "fc" + str(i + 1)

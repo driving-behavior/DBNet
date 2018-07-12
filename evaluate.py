@@ -10,7 +10,7 @@ import scipy
 import provider
 import tensorflow as tf
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(BASE_DIR, 'models'))
