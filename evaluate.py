@@ -342,6 +342,6 @@ def mean_topk_error(preds, labels, k):
     return np.mean(np.sort(a_error)[::-1][0:k]), np.mean(np.sort(s_error)[::-1][0:k])
 
 if __name__ == "__main__":
-    test()
-    # evaluate()
+    if FLAGS.test: test()
+    else: evaluate()
     # plot_acc_from_txt()
