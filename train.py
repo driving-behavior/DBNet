@@ -103,11 +103,11 @@ def get_bn_decay(batch):
 def train():
     with tf.Graph().as_default():
         with tf.device('/gpu:'+str(GPU_INDEX)):
-            if 'pn' in MODEL_FILE:
+            if '_pn' in MODEL_FILE:
                 data_input = provider.Provider()
                 imgs_pl, pts_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE)
                 imgs_pl = [imgs_pl, pts_pl]
-            elif 'io' in MODEL_FILE:
+            elif '_io' in MODEL_FILE:
                 data_input = provider.Provider()
                 imgs_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE)
             else:

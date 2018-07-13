@@ -3,6 +3,7 @@ from __future__ import print_function
 import glob
 import os
 import random
+import re
 from math import ceil
 
 import numpy as np
@@ -11,6 +12,17 @@ from PIL import Image
 
 import laspy
 
+
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [ atoi(c) for c in re.split('(\d+)', text) ]
 
 # Data providers for dbnet-2018 data
 class Provider:
@@ -49,8 +61,8 @@ class Provider:
         train_sub = glob.glob(os.path.join(self.train_dir, "*"))
         val_sub = glob.glob(os.path.join(self.val_dir, "*"))
         test_sub = glob.glob(os.path.join(self.test_dir, "*"))
-        train_sub.sort()
-        val_sub.sort()
+        train_sub.sort(key=natural_keys)
+        val_sub.sort(key=natural_keys)
         self.read_from(train_sub, filename, "train")
         self.read_from(val_sub, filename, "val")
         self.read_from(test_sub, filename, "test")
@@ -222,7 +234,7 @@ class Provider2:
             :param filename: filename of labels
         """
         test_sub = glob.glob(os.path.join(self.test_dir, "*"))
-        test_sub.sort()
+        test_sub.sort(key=natural_keys)
         self.read_from(test_sub, filename)
 
     def read_from(self, sub_folders, filename):

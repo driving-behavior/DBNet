@@ -10,9 +10,9 @@ sys.path.append(os.path.join(BASE_DIR, '../utils'))
 
 import tf_util
 from custom_layers import Scale
-from keras.layers import (Input, Dense, Convolution2D, MaxPooling2D, 
-                          AveragePooling2D, GlobalAveragePooling2D, 
-                          ZeroPadding2D, Dropout, Flatten, add, 
+from keras.layers import (Input, Dense, Convolution2D, MaxPooling2D,
+                          AveragePooling2D, GlobalAveragePooling2D,
+                          ZeroPadding2D, Dropout, Flatten, add,
                           concatenate, Reshape, Activation)
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
@@ -28,8 +28,8 @@ def placeholder_inputs(batch_size, img_rows=224, img_cols=224, separately=False)
     return imgs_pl, labels_pl
 
 
-def get_densenet(img_rows, img_cols, nb_dense_block=4, 
-                 growth_rate=32, nb_filter=64, reduction=0.5, 
+def get_densenet(img_rows, img_cols, nb_dense_block=4,
+                 growth_rate=32, nb_filter=64, reduction=0.5,
                  dropout_rate=0.0, weight_decay=1e-4):
     '''
     DenseNet 169 Model for Keras
@@ -112,7 +112,7 @@ def get_densenet(img_rows, img_cols, nb_dense_block=4,
     return model
 
 
-def get_model(net, is_training, add_lstm=True, bn_decay=None, separately=False):
+def get_model(net, is_training, add_lstm=False, bn_decay=None, separately=False):
     """ Densenet169 regression model, input is BxWxHx3, output Bx2"""
     net = get_densenet(224, 224)(net)
 
@@ -128,7 +128,7 @@ def get_model(net, is_training, add_lstm=True, bn_decay=None, separately=False):
                               is_training=is_training,
                               scope="dp1")
         net = cnn_lstm_block(net)
-    
+
     return net
 
 

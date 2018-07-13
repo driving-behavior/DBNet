@@ -19,7 +19,7 @@ K.set_learning_phase(1) #set learning phase
 
 def placeholder_inputs(batch_size, img_rows=299, img_cols=299, points=16384, separately=False):
     imgs_pl = tf.placeholder(tf.float32, shape=(batch_size, img_rows, img_cols, 3))
-    fmaps_pl = tf.placeholder(tf.float32, shape=(batch_size, img_rows, img_cols, 3))    
+    fmaps_pl = tf.placeholder(tf.float32, shape=(batch_size, img_rows, img_cols, 3))
     if separately:
         speeds_pl = tf.placeholder(tf.float32, shape=(batch_size))
         angles_pl = tf.placeholder(tf.float32, shape=(batch_size))
@@ -81,7 +81,7 @@ def get_inception(img_rows=299, img_cols=299, dropout_keep_prob=0.2, separately=
     return model
 
 
-def get_model(net, is_training, add_lstm=True, bn_decay=None, separately=False):
+def get_model(net, is_training, add_lstm=False, bn_decay=None, separately=False):
     """ Inception_V4 regression model, input is BxWxHx3, output Bx2"""
     batch_size = net[0].get_shape()[0].value
     img_net, fmap_net = net[0], net[1]
@@ -341,4 +341,4 @@ if __name__ == '__main__':
         fmaps = tf.zeros((32, 224, 224, 3))
         outputs = get_model([imgs, fmaps], tf.constant(True))
         print(outputs)
-        
+

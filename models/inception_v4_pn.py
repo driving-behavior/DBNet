@@ -82,7 +82,7 @@ def get_inception(img_rows=299, img_cols=299, dropout_keep_prob=0.2, separately=
     return model
 
 
-def get_model(net, is_training, add_lstm=True, bn_decay=None, separately=False):
+def get_model(net, is_training, add_lstm=False, bn_decay=None, separately=False):
     """ Inception_V4 regression model, input is BxWxHx3, output Bx2"""
     batch_size = net[0].get_shape()[0].value
     img_net, pt_net = net[0], net[1]

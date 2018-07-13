@@ -88,7 +88,7 @@ def get_resnet(img_rows=224, img_cols=224, separately=False):
     return model
 
 
-def get_model(net, is_training, add_lstm=True, bn_decay=None, separately=False):
+def get_model(net, is_training, add_lstm=False, bn_decay=None, separately=False):
     """ ResNet152 regression model, input is BxWxHx3, output Bx2"""
     net = get_resnet(224, 224)(net)
 
@@ -104,7 +104,7 @@ def get_model(net, is_training, add_lstm=True, bn_decay=None, separately=False):
                               is_training=is_training,
                               scope="dp1")
         net = cnn_lstm_block(net)
-    
+
     return net
 
 
@@ -244,4 +244,4 @@ if __name__ == '__main__':
         inputs = tf.zeros((32, 224, 224, 3))
         outputs = get_model(inputs, tf.constant(True))
         print(outputs)
-        
+

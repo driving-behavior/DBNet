@@ -11,9 +11,9 @@ sys.path.append(os.path.join(BASE_DIR, '../utils'))
 import tf_util
 import pointnet
 from custom_layers import Scale
-from keras.layers import (Input, Dense, Convolution2D, MaxPooling2D, 
-                          AveragePooling2D, GlobalAveragePooling2D, 
-                          ZeroPadding2D, Dropout, Flatten, add, 
+from keras.layers import (Input, Dense, Convolution2D, MaxPooling2D,
+                          AveragePooling2D, GlobalAveragePooling2D,
+                          ZeroPadding2D, Dropout, Flatten, add,
                           concatenate, Reshape, Activation)
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
@@ -23,7 +23,7 @@ K.set_learning_phase(1) #set learning phase
 
 def placeholder_inputs(batch_size, img_rows=224, img_cols=224, points=16384, separately=False):
     imgs_pl = tf.placeholder(tf.float32, shape=(batch_size, img_rows, img_cols, 3))
-    fmaps_pl = tf.placeholder(tf.float32, shape=(batch_size, img_rows, img_cols, 3))    
+    fmaps_pl = tf.placeholder(tf.float32, shape=(batch_size, img_rows, img_cols, 3))
     if separately:
         speeds_pl = tf.placeholder(tf.float32, shape=(batch_size))
         angles_pl = tf.placeholder(tf.float32, shape=(batch_size))
@@ -32,8 +32,8 @@ def placeholder_inputs(batch_size, img_rows=224, img_cols=224, points=16384, sep
     return imgs_pl, fmaps_pl, labels_pl
 
 
-def get_densenet(img_rows, img_cols, nb_dense_block=4, 
-                 growth_rate=32, nb_filter=64, reduction=0.5, 
+def get_densenet(img_rows, img_cols, nb_dense_block=4,
+                 growth_rate=32, nb_filter=64, reduction=0.5,
                  dropout_rate=0.0, weight_decay=1e-4):
     '''
     DenseNet 169 Model for Keras
@@ -116,7 +116,7 @@ def get_densenet(img_rows, img_cols, nb_dense_block=4,
     return model
 
 
-def get_model(net, is_training, add_lstm=True, bn_decay=None, separately=False):
+def get_model(net, is_training, add_lstm=False, bn_decay=None, separately=False):
     """ Densenet169 regression model, input is BxWxHx3, output Bx2"""
     batch_size = net[0].get_shape()[0].value
     img_net, fmap_net = net[0], net[1]

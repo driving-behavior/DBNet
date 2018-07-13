@@ -8,11 +8,14 @@ import time
 import numpy as np
 import scipy
 
-import provider
-import tensorflow as tf
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(BASE_DIR, 'models'))
+sys.path.append(os.path.join(BASE_DIR, 'utils'))
+
+import provider
+import tensorflow as tf
+from helper import str2bool
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', type=int, default=0,
@@ -27,7 +30,7 @@ parser.add_argument('--batch_size', type=int, default=8,
                     help='Batch Size during training [default: 8]')
 parser.add_argument('--result_dir', default='results',
                     help='Result folder path [default: results]')
-parser.add_argument('--test', type=bool, default=False, # only used in test server
+parser.add_argument('--test', type=str2bool, default=False, # only used in test server
                     help='Get performance on test data [default: False]')
 
 FLAGS = parser.parse_args()
@@ -35,7 +38,12 @@ BATCH_SIZE = FLAGS.batch_size
 GPU_INDEX = FLAGS.gpu
 MODEL_PATH = FLAGS.model_path
 
-assert (FLAGS.model == "nvidia_pn")
+supported_models = ["nvidia_io", "nvidia_pn",
+                    "resnet152_io", "resnet152_pn",
+                    "inception_v4_io", "inception_v4_pn",
+                    "densenet169_io", "densenet169_pn"]
+assert (FLAGS.model in supported_models)
+
 MODEL = importlib.import_module(FLAGS.model)  # import network module
 MODEL_FILE = os.path.join(BASE_DIR, 'models', FLAGS.model+'.py')
 
@@ -46,10 +54,10 @@ if FLAGS.test:
     TEST_RESULT_DIR = os.path.join(RESULT_DIR, "test")
     if not os.path.exists(TEST_RESULT_DIR):
         os.makedirs(TEST_RESULT_DIR)
-    LOG_FOUT = open(os.path.join(TEST_RESULT_DIR, 'log_evaluate.txt'), 'w')
+    LOG_FOUT = open(os.path.join(TEST_RESULT_DIR, 'log_test.txt'), 'w')
     LOG_FOUT.write(str(FLAGS)+'\n')
 else:
-    VAL_RESULT_DIR = os.path.join(RESULT_DIR, "test")
+    VAL_RESULT_DIR = os.path.join(RESULT_DIR, "val")
     if not os.path.exists(VAL_RESULT_DIR):
         os.makedirs(VAL_RESULT_DIR)
     LOG_FOUT = open(os.path.join(VAL_RESULT_DIR, 'log_evaluate.txt'), 'w')
@@ -63,10 +71,13 @@ def log_string(out_str):
 
 def evaluate():
     with tf.device('/gpu:'+str(GPU_INDEX)):
-        if 'pn' in MODEL_FILE:
+        if '_pn' in MODEL_FILE:
             data_input = provider.Provider()
             imgs_pl, pts_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE)
             imgs_pl = [imgs_pl, pts_pl]
+        elif '_io' in MODEL_FILE:
+            data_input = provider.Provider()
+            imgs_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE)
         else:
             raise NotImplementedError
 
@@ -115,13 +126,17 @@ def eval_one_epoch(sess, ops, data_input):
     acc_a = [0] * 5
     acc_s = [0] * 5
     for batch_idx in range(num_batches):
-        if "io" in MODEL_FILE:
-            imgs, labels = data_input.load_one_batch(BATCH_SIZE, "val")
+        if "_io" in MODEL_FILE:
+            imgs, labels = data_input.load_one_batch(BATCH_SIZE, "val", reader_type="io")
+            if "resnet" in MODEL_FILE or "inception" in MODEL_FILE or "densenet" in MODEL_FILE:
+                imgs = MODEL.resize(imgs)
             feed_dict = {ops['imgs_pl']: imgs,
                          ops['labels_pl']: labels,
                          ops['is_training_pl']: is_training}
         else:
             imgs, others, labels = data_input.load_one_batch(BATCH_SIZE, "val")
+            if "resnet" in MODEL_FILE or "inception" in MODEL_FILE or "densenet" in MODEL_FILE:
+                imgs = MODEL.resize(imgs)
             feed_dict = {ops['imgs_pl'][0]: imgs,
                          ops['imgs_pl'][1]: others,
                          ops['labels_pl']: labels,
@@ -168,12 +183,16 @@ def eval_one_epoch(sess, ops, data_input):
 
 def test():
     with tf.device('/gpu:'+str(GPU_INDEX)):
-        if 'pn' in MODEL_FILE:
+        if '_pn' in MODEL_FILE:
             data_input = provider.Provider2()
             imgs_pl, pts_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE)
             imgs_pl = [imgs_pl, pts_pl]
+        elif '_io' in MODEL_FILE:
+            data_input = provider.Provider2()
+            imgs_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE)
         else:
             raise NotImplementedError
+
 
         is_training_pl = tf.placeholder(tf.bool, shape=())
         print(is_training_pl)
@@ -220,13 +239,17 @@ def test_one_epoch(sess, ops, data_input):
     acc_a = [0] * 5
     acc_s = [0] * 5
     for batch_idx in range(num_batches):
-        if "io" in MODEL_FILE:
-            imgs, labels = data_input.load_one_batch(BATCH_SIZE)
+        if "_io" in MODEL_FILE:
+            imgs, labels = data_input.load_one_batch(BATCH_SIZE, reader_type="io")
+            if "resnet" in MODEL_FILE or "inception" in MODEL_FILE or "densenet" in MODEL_FILE:
+                imgs = MODEL.resize(imgs)
             feed_dict = {ops['imgs_pl']: imgs,
                          ops['labels_pl']: labels,
                          ops['is_training_pl']: is_training}
         else:
             imgs, others, labels = data_input.load_one_batch(BATCH_SIZE)
+            if "resnet" in MODEL_FILE or "inception" in MODEL_FILE or "densenet" in MODEL_FILE:
+                imgs = MODEL.resize(imgs)
             feed_dict = {ops['imgs_pl'][0]: imgs,
                          ops['imgs_pl'][1]: others,
                          ops['labels_pl']: labels,
@@ -244,25 +267,25 @@ def test_one_epoch(sess, ops, data_input):
             acc_s[i] = np.mean(np.abs(np.subtract(pred_val[:, 0], labels[:, 0])) < (1.0 * (i+1) / 20))
             acc_s_sum[i] += acc_s[i]
 
-    log_string('eval mean loss: %f' % (loss_sum / float(num_batches)))
+    log_string('test mean loss: %f' % (loss_sum / float(num_batches)))
     for i in range(5):
-        log_string('eval accuracy (angle-%d): %f' % (float(i+1), (acc_a_sum[i] / float(num_batches))))
-        log_string('eval accuracy (speed-%d): %f' % (float(i+1), (acc_s_sum[i] / float(num_batches))))
+        log_string('test accuracy (angle-%d): %f' % (float(i+1), (acc_a_sum[i] / float(num_batches))))
+        log_string('test accuracy (speed-%d): %f' % (float(i+1), (acc_s_sum[i] / float(num_batches))))
 
     preds = np.vstack(preds)
     labels = np.vstack(labels_total)
 
     a_error, s_error = mean_max_error(preds, labels, dicts=get_dicts())
-    log_string('eval error (mean-max): angle:%.2f speed:%.2f' %
+    log_string('test error (mean-max): angle:%.2f speed:%.2f' %
                (a_error / scipy.pi * 180, s_error * 20))
     a_error, s_error = max_error(preds, labels)
-    log_string('eval error (max): angle:%.2f speed:%.2f' %
+    log_string('test error (max): angle:%.2f speed:%.2f' %
                (a_error / scipy.pi * 180, s_error * 20))
     a_error, s_error = mean_topk_error(preds, labels, 5)
-    log_string('eval error (mean-top5): angle:%.2f speed:%.2f' %
+    log_string('test error (mean-top5): angle:%.2f speed:%.2f' %
                (a_error / scipy.pi * 180, s_error * 20))
     a_error, s_error = mean_error(preds, labels)
-    log_string('eval error (mean): angle:%.2f speed:%.2f' %
+    log_string('test error (mean): angle:%.2f speed:%.2f' %
                (a_error / scipy.pi * 180, s_error * 20))
 
     print (preds.shape, labels.shape)

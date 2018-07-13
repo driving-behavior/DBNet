@@ -92,7 +92,7 @@ def get_resnet(img_rows=224, img_cols=224, separately=False):
     return model
 
 
-def get_model(net, is_training, add_lstm=True, bn_decay=None, separately=False):
+def get_model(net, is_training, add_lstm=False, bn_decay=None, separately=False):
     """ ResNet152 regression model, input is BxWxHx3, output Bx2"""
     batch_size = net[0].get_shape()[0].value
     img_net, fmap_net = net[0], net[1]
