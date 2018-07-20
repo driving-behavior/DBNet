@@ -20,7 +20,7 @@ The resources of our work are available: [[paper]](http://openaccess.thecvf.com/
 ## Introduction
 This work is based on our [research paper](http://openaccess.thecvf.com/content_cvpr_2018/html/Chen_LiDAR-Video_Driving_Dataset_CVPR_2018_paper.html), which is going to appear in CVPR 2018. We propose a large-scale dataset for driving behavior learning, namely, DBNet. You can also check our [dataset webpage](http://www.drivingbehavior.org/) for a deeper introduction.
 
-In this repository, we release __demo code__ and __partial prepared data__ for training with only images, as well as leveraging feature maps or point clouds. The prepared data are accessible [here](https://drive.google.com/open?id=1NjhHwV_q6EMZ6MiGhZnqxg7yRCawx79c). (__More demo models and scripts are released soon!__)
+In this repository, we release __demo code__ and __partial prepared data__ for training with only images, as well as leveraging feature maps or point clouds. The prepared data are accessible [here](https://drive.google.com/open?id=14RPdVTwBTuCTo0tFeYmL_SyN8fD0g6Hc). (__More demo models and scripts are released soon!__)
 
 ## Requirements
 
