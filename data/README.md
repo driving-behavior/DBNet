@@ -3,7 +3,7 @@
 This is the place where DBNet data are placed in order to fit the default path in `../provider.py`. In total, two kinds of prepared data are provided, which are listed in `dbnet-2018` and `demo` folder, respectively.
 
 ### dbnet-2018
-Download DBNet-2018 challenge data [here]() and organize the folders as follows (in `dbnet-2018/`):
+Download DBNet-2018 challenge data [here](https://drive.google.com/open?id=14RPdVTwBTuCTo0tFeYmL_SyN8fD0g6Hc) and organize the folders as follows (in `dbnet-2018/`):
 ```
 ├── train
 ├─  └── i [56 folders] (6569 in total, will release continously)
@@ -26,7 +26,7 @@ In general, the train/val/test ratio is approximatingly set to 8:1:1 and all of 
 Please note that the data in subfolders of `train/`, `val/` and `test/` are __continuous__ and __time-ordered__. The `ith` line of `behavior.csv` correponds to `i-1.jpg` in `dvf_66x200/` and `i-1.las` in `points_16384/`. Moreover, if you don't intend to utilize prepared data directly, please download and pre-process the [raw data]() in your favorite methods.
 
 ### demo
-Download DBNet demo data [here]() and organize the folders as follows (in `demo`):
+Download DBNet demo data [here](https://drive.google.com/open?id=1NjhHwV_q6EMZ6MiGhZnqxg7yRCawx79c) and organize the folders as follows (in `demo`):
 
 ```
 ├── data.csv
