@@ -1,12 +1,12 @@
 <img src=https://github.com/driving-behavior/DBNet/blob/master/docs/logo.jpeg width=135/>
 
-[DBNet](http://www.drivingbehavior.org/) is a __large-scale driving behavior dataset__, which provides large-scale __high-quality point clouds__ scanned by Velodyne lasers, __high-resolution videos__ recorded by dashboard cameras and __standard drivers' behaviors__ (vehicle speed, steering angle) collected by real-time censors.
+[DBNet](http://www.dbehavior.net/) is a __large-scale driving behavior dataset__, which provides large-scale __high-quality point clouds__ scanned by Velodyne lasers, __high-resolution videos__ recorded by dashboard cameras and __standard drivers' behaviors__ (vehicle speed, steering angle) collected by real-time censors.
 
 Extensive experiments demonstrate that extra depth information helps networks to determine driving policies indeed. We hope it will become a useful resource for autonomous driving research community.
 
 _Created by [Yiping Chen*](https://scholar.google.com/citations?user=e9lv2fUAAAAJ&hl=en), [Jingkang Wang*](https://wangjksjtu.github.io/), [Jonathan Li](https://uwaterloo.ca/mobile-sensing/people-profiles/jonathan-li), [Cewu Lu](http://www.mvig.org/), Zhipeng Luo, HanXue and [Cheng Wang](http://chwang.xmu.edu.cn/). (*equal contribution)_
 
-The resources of our work are available: [[paper]](http://openaccess.thecvf.com/content_cvpr_2018/papers/Chen_LiDAR-Video_Driving_Dataset_CVPR_2018_paper.pdf), [[code]](https://github.com/driving-behavior/DBNet), [[video]](http://www.drivingbehavior.org/data/demo.mp4), [[website]](http://www.drivingbehavior.org/), [[challenge]](http://www.drivingbehavior.org/task.html)
+The resources of our work are available: [[paper]](http://openaccess.thecvf.com/content_cvpr_2018/papers/Chen_LiDAR-Video_Driving_Dataset_CVPR_2018_paper.pdf), [[code]](https://github.com/driving-behavior/DBNet), [[video]](http://www.dbehavior.net/data/demo.mp4), [[website]](http://www.dbehavior.net/), [[challenge]](http://www.dbehavior.net/task.html)
 
 ## Contents
 1. [Introduction](#introduction)
@@ -18,7 +18,7 @@ The resources of our work are available: [[paper]](http://openaccess.thecvf.com/
 7. [License](#license)
 
 ## Introduction
-This work is based on our [research paper](http://openaccess.thecvf.com/content_cvpr_2018/html/Chen_LiDAR-Video_Driving_Dataset_CVPR_2018_paper.html), which is going to appear in CVPR 2018. We propose a large-scale dataset for driving behavior learning, namely, DBNet. You can also check our [dataset webpage](http://www.drivingbehavior.org/) for a deeper introduction.
+This work is based on our [research paper](http://openaccess.thecvf.com/content_cvpr_2018/html/Chen_LiDAR-Video_Driving_Dataset_CVPR_2018_paper.html), which is going to appear in CVPR 2018. We propose a large-scale dataset for driving behavior learning, namely, DBNet. You can also check our [dataset webpage](http://www.dbehavior.net/) for a deeper introduction.
 
 In this repository, we release __demo code__ and __partial prepared data__ for training with only images, as well as leveraging feature maps or point clouds. The prepared data are accessible [here](https://drive.google.com/open?id=14RPdVTwBTuCTo0tFeYmL_SyN8fD0g6Hc). (__More demo models and scripts are released soon!__)
 
@@ -37,7 +37,7 @@ To train a model to predict vehicle speeds and steering angles:
 
     python train.py --model nvidia_pn --batch_size 16 --max_epoch 125 --gpu 0
 
-The names of the models are consistent with our [paper](http://www.drivingbehavior.org/publications.html).
+The names of the models are consistent with our [paper](http://www.dbehavior.net/publications.html).
 Log files and network parameters will be saved to `logs` folder in default.
 
 To see HELP for the training script:
