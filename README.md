@@ -94,4 +94,4 @@ If you find our work useful in your research, please consider citing:
 	}
 
 ## License
-Our code is released under Apache 2.0 License. The copyright of DBNet could be checked [here](http://www.drivingbehavior.org).
+Our code is released under Apache 2.0 License. The copyright of DBNet could be checked [here](http://www.dbehavior.net/contact.html).
