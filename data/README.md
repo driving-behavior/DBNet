@@ -7,18 +7,21 @@ Download DBNet-2018 challenge data [here](https://drive.google.com/open?id=14RPd
 ```
 ├── train
 ├─  └── i [56 folders] (6569 in total, will release continously)
-├─      ├── dvr_66x200   [<= 120 images]
-├─      ├── points_16384 [<= 120 images]
-├─      └── behavior.csv [labels]
+├─      ├── dvr_66x200     [<= 120 images]
+├─      ├── dvr_1920x1080  [<= 120 images]
+├─      ├── points_16384   [<= 120 images]
+├─      └── behavior.csv   [labels]
 ├── val
 ├─  └── j [20 folders] (2349 in total)
-├─      ├── dvr_66x200   [<= 120 images]
-├─      ├── points_16384 [<= 120 clouds]
-├─      └── behavior.csv [labels]
+├─      ├── dvr_66x200     [<= 120 images]
+├─      ├── dvr_1920x1080  [<= 120 images]
+├─      ├── points_16384   [<= 120 clouds]
+├─      └── behavior.csv   [labels]
 └── test
     └── k [20 folders] (2376 in total)
-        ├── dvr_66x200   [<= 120 images]
-        └── points_16384 [<= 120 clouds]
+        ├── dvr_66x200     [<= 120 images]
+        ├── dvr_1920x1080  [<= 120 images]
+        └── points_16384   [<= 120 clouds]
     
 ```
 In general, the train/val/test ratio is approximatingly set to 8:1:1 and all of the val/test data are released already. Almost five eighths of training data are still pre-processed and will be __uploaded soon__.
