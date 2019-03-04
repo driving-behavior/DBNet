@@ -120,7 +120,7 @@ def feature_map(merge, ranges, alpha=0.2, beta=0.8, GSD=0.5):
             print "1000000_loop" + str(i / 1000000)
         point = merge[:,i]
         x = int((point[0] - X_min) / GSD)
-        y = int((point[1] - X_min) / GSD)
+        y = int((point[1] - Y_min) / GSD)
         try:
             net_dict[(x, y)].append(i)
         except:
