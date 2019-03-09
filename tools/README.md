@@ -29,3 +29,18 @@ Downsample point clouds to 16384 points and save in `.las` format:
     CloudCompare.exe -SILENT -NO_TIMESTAMP -C_EXPORT_FMT LAS -O %s -SS RANDOM 16384
 
 More command line usages of CloudCompareare available on the [offical manual page](http://www.cloudcompare.org/doc/wiki/index.php?title=Command_line_mode).
+
+### las2fmap Examples
+Downlaod the example point cloud from the [Google Drive](https://drive.google.com/file/d/1lxl7M2MTA7afg5UItA5hCvh-Wt5bTSNJ/view?usp=sharing). 
+
+    python las2fmap.py -f example.las
+
+To see HELP for the `las2fmap.py` script:
+
+    python las2fmap.py -h
+    # usage: las2fmap.py [-h] [-d DIR] [-f FILE]
+    # 
+    # optional arguments:
+    # -h, --help            show this help message and exit
+    # -d DIR, --dir DIR     Directory of las files [default: '']
+    # -f FILE, --file FILE  Specify one las file you want to convert # [default: '']
