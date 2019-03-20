@@ -8,12 +8,13 @@ Extensive experiments demonstrate that extra depth information helps networks to
 
 _Created by [Yiping Chen*](https://scholar.google.com/citations?user=e9lv2fUAAAAJ&hl=en), [Jingkang Wang*](https://wangjksjtu.github.io/), [Jonathan Li](https://uwaterloo.ca/mobile-sensing/people-profiles/jonathan-li), [Cewu Lu](http://www.mvig.org/), Zhipeng Luo, HanXue and [Cheng Wang](http://chwang.xmu.edu.cn/). (*equal contribution)_
 
-The resources of our work are available: [[paper]](http://openaccess.thecvf.com/content_cvpr_2018/papers/Chen_LiDAR-Video_Driving_Dataset_CVPR_2018_paper.pdf), [[code]](https://github.com/driving-behavior/DBNet), [[video]](http://www.dbehavior.net/data/demo.mp4), [[website]](http://www.dbehavior.net/), [[challenge]](http://www.dbehavior.net/task.html)
+The resources of our work are available: [[paper]](http://openaccess.thecvf.com/content_cvpr_2018/papers/Chen_LiDAR-Video_Driving_Dataset_CVPR_2018_paper.pdf), [[code]](https://github.com/driving-behavior/DBNet), [[video]](http://www.dbehavior.net/data/demo.mp4), [[website]](http://www.dbehavior.net/), [[challenge]](http://www.dbehavior.net/task.html), [[prepared data]](https://drive.google.com/file/d/1WxzOrhvMnHCOkh6EFGWltflyPb_UnGqo/view?usp=sharing)
 
+<!--
 ## News!
 __DBNet Autonomous Driving Data (prepared & raw) are released [here](http://www.dbehavior.net/download.aspx)!__
-
 ___We are going to organize DBNet challenges for CVPR/ICCV/ECCV Workshops. The instructions of DBNet-2018 challenge will be open soon. Stay tuned!___
+-->
 
 ## Contents
 1. [Introduction](#introduction)
